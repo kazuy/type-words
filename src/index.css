@@ -1,0 +1,56 @@
+:root {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: #f4f3e9;
+  background-color: #264941;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.top-screen {
+  font-family: "Yomogi", cursive;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.top-screen h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 10vw, 4.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.top-screen button {
+  max-width: 100%;
+  padding: 0.875rem 1.75rem;
+  border: 2px solid currentColor;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: inherit;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.top-screen button:hover {
+  background-color: #ffffff14;
+}
+
+.top-screen button:focus-visible {
+  outline: 3px solid #f4f3e9;
+  outline-offset: 5px;
+}
