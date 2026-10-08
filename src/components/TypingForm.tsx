@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  checkTypingAnswer,
   filterTypingInput,
-  isMatchingCharacter,
 } from "../domain/practice/typing";
 import TypingCharacters from "./TypingCharacters";
 
@@ -14,20 +14,19 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
   const [cursor, setCursor] = useState(0);
   const composing = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-  const mismatchPositions = Array.from(input).flatMap((character, index) =>
-    isMatchingCharacter(character, target[index]) ? [] : [index + 1],
-  );
-  const complete =
-    input.length === target.length && mismatchPositions.length === 0;
+
+  const { mismatchPositions, complete } = checkTypingAnswer(input, target);
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
         if (!complete || composing.current) return;
+
         onSubmit();
       }}
     >

@@ -8,6 +8,7 @@ export default function TypingCharacters({ target, input, cursor }: Props) {
     character,
     index,
   }));
+
   return (
     <label
       className="typing-characters"
@@ -26,6 +27,7 @@ export default function TypingCharacters({ target, input, cursor }: Props) {
             : correct
               ? character
               : typed;
+
         return (
           <span
             key={id}

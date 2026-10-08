@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  checkTypingAnswer,
   isMatchingCharacter,
   normalizePracticeText,
 } from "../../src/domain/practice/typing";
@@ -30,3 +31,31 @@ test("filters Japanese, full-width characters, and line breaks from typing input
   );
   expect(filterTypingInput("aりんごＡb、c。\n, .")).toBe("abc, .");
 });
+
+test.each([
+  { input: "", target: "apple", mismatchPositions: [], complete: false },
+  { input: "app", target: "apple", mismatchPositions: [], complete: false },
+  { input: "APPLE", target: "apple", mismatchPositions: [], complete: true },
+  { input: "axple", target: "apple", mismatchPositions: [2], complete: false },
+  {
+    input: "axpxe",
+    target: "apple",
+    mismatchPositions: [2, 4],
+    complete: false,
+  },
+  { input: "apples", target: "apple", mismatchPositions: [6], complete: false },
+  {
+    input: "this is an apple.",
+    target: "This is an apple.",
+    mismatchPositions: [],
+    complete: true,
+  },
+])(
+  "checks answer $input against $target",
+  ({ input, target, mismatchPositions, complete }) => {
+    expect(checkTypingAnswer(input, target)).toEqual({
+      mismatchPositions,
+      complete,
+    });
+  },
+);
