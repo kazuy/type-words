@@ -161,7 +161,7 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.25rem 1ch;
   font-family: monospace;
   font-size: clamp(1.5rem, 5vw, 2rem);
 }
@@ -280,4 +280,9 @@ button:disabled {
   .practice-screen form > button {
     margin-top: 1.25rem;
   }
+}
+
+.typing-word {
+  display: inline-flex;
+  gap: 0.25rem;
 }

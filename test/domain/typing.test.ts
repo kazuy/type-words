@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
   checkTypingAnswer,
+  getTypingTarget,
+  getTypingWords,
   isMatchingCharacter,
   normalizePracticeText,
 } from "../../src/domain/practice/typing";
@@ -29,7 +31,7 @@ test("filters Japanese, full-width characters, and line breaks from typing input
   const { filterTypingInput } = await import(
     "../../src/domain/practice/typing"
   );
-  expect(filterTypingInput("aりんごＡb、c。\n, .")).toBe("abc, .");
+  expect(filterTypingInput("aりんごＡb、c。\n, .")).toBe("abc,.");
 });
 
 test.each([
@@ -45,7 +47,7 @@ test.each([
   },
   { input: "apples", target: "apple", mismatchPositions: [6], complete: false },
   {
-    input: "this is an apple.",
+    input: "thisisanapple.",
     target: "This is an apple.",
     mismatchPositions: [],
     complete: true,
@@ -59,3 +61,13 @@ test.each([
     });
   },
 );
+
+test("maps words to continuous input positions without spaces", () => {
+  expect(getTypingTarget("This is an apple.")).toBe("Thisisanapple.");
+  const words = getTypingWords("This is an apple.");
+  expect(
+    words.map((word) => word.characters.map((item) => item.character).join("")),
+  ).toEqual(["This", "is", "an", "apple."]);
+  expect(words[1].characters[0].index).toBe(4);
+  expect(words[3].characters[0].index).toBe(8);
+});

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   checkTypingAnswer,
   filterTypingInput,
+  getTypingTarget,
 } from "../domain/practice/typing";
 import TypingCharacters from "./TypingCharacters";
 
@@ -32,6 +33,7 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
     setSelectionToRestore(null);
   }, [selectionToRestore]);
 
+  const typingTarget = getTypingTarget(target);
   const { mismatchPositions, complete } = checkTypingAnswer(input, target);
 
   return (
@@ -73,7 +75,7 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
           }
           const value = filterTypingInput(event.target.value).slice(
             0,
-            target.length,
+            typingTarget.length,
           );
           const position = filterTypingInput(
             event.target.value.slice(0, event.target.selectionStart ?? 0),
@@ -119,7 +121,6 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
       />
       <p id="typing-instructions">
         <span>間違えた文字は Backspace で消せます。</span>
-        <span>空白も入力してください。</span>
       </p>
       <p id="typing-feedback" className="sr-only">
         {input.length}文字入力済み。

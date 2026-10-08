@@ -1,13 +1,9 @@
-import { isMatchingCharacter } from "../domain/practice/typing";
+import { getTypingWords, isMatchingCharacter } from "../domain/practice/typing";
 
 type Props = { target: string; input: string; cursor: number };
 
 export default function TypingCharacters({ target, input, cursor }: Props) {
-  const positions = Array.from(target, (character, index) => ({
-    id: `${index}`,
-    character,
-    index,
-  }));
+  const words = getTypingWords(target);
 
   return (
     <label
@@ -15,28 +11,26 @@ export default function TypingCharacters({ target, input, cursor }: Props) {
       htmlFor="typing-input"
       aria-hidden="true"
     >
-      {positions.map(({ id, character, index }) => {
-        const typed = input[index];
-        const correct =
-          typed !== undefined && isMatchingCharacter(typed, character);
-        const displayed =
-          typed === undefined
-            ? character === " "
-              ? " "
-              : "_"
-            : correct
-              ? character
-              : typed;
+      {words.map((word) => (
+        <span key={word.id} className="typing-word">
+          {word.characters.map(({ id, character, index }) => {
+            const typed = input[index];
+            const correct =
+              typed !== undefined && isMatchingCharacter(typed, character);
+            const displayed =
+              typed === undefined ? "_" : correct ? character : typed;
 
-        return (
-          <span
-            key={id}
-            className={`typing-character ${typed === undefined ? "untyped" : correct ? "correct" : "incorrect"} ${index === cursor ? "current" : ""}`}
-          >
-            {displayed === " " ? "␣" : displayed}
-          </span>
-        );
-      })}
+            return (
+              <span
+                key={id}
+                className={`typing-character ${typed === undefined ? "untyped" : correct ? "correct" : "incorrect"} ${index === cursor ? "current" : ""}`}
+              >
+                {displayed}
+              </span>
+            );
+          })}
+        </span>
+      ))}
     </label>
   );
 }

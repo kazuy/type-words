@@ -152,3 +152,25 @@ test("ignores Japanese input and discards IME edits without losing accepted inpu
     container.querySelector(".typing-positions #enter-hint"),
   ).not.toBeNull();
 });
+
+test("skips sentence spaces and keeps the caret on the next editable character", () => {
+  const { container } = render(
+    <TypingPracticePage
+      settings={{ ...settings, contentType: "sentence" }}
+      onFinish={vi.fn()}
+    />,
+  );
+  type("This");
+  expect(container.querySelectorAll(".typing-word")).toHaveLength(4);
+  expect(container.querySelectorAll(".typing-character")[4]).toHaveClass(
+    "current",
+  );
+  type("Thisi");
+  type("This");
+  expect(container.querySelectorAll(".typing-character")[4]).toHaveClass(
+    "current",
+  );
+  type("Thisisanapple.");
+  expect(screen.getByRole("button")).toBeEnabled();
+  expect(screen.getByRole("textbox")).toHaveValue("Thisisanapple.");
+});
