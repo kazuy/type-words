@@ -18,16 +18,18 @@ Cloudflare Pages Git integration handles production deployment from `main`. GitH
 
 ## Project structure
 
-- `src/`: React and TypeScript UI components and styles
+- `app/src/`: React and TypeScript UI components and styles
   - `pages/`: Top, practice settings, and typing practice screens
   - `components/`: Individual practice settings and shared radio controls
-- `src/domain/practice/`: Word entry types, practice question generation, and typing text normalization
-- `public/`: Favicons and Web App Manifest
-- `test/`: Tests using Vitest and React Testing Library
-- `index.html`: HTML entry point
-- `vite.config.ts`: Vite and test configuration
-- `biome.json`: Linting and formatting configuration
-- `mise.toml`: Pinned Node.js version
+- `app/src/domain/practice/`: Word entry types, practice question generation, and typing text normalization
+- `app/public/`: Favicons and Web App Manifest
+- `app/test/`: Tests using Vitest and React Testing Library
+- `app/index.html`: HTML entry point
+- `app/vite.config.ts`: Vite and test configuration
+- `app/biome.json`: Linting and formatting configuration
+- `app/scripts/`: Build preparation scripts
+- `infra/`: Terraform configuration for the private word data bucket
+- `mise.toml`: Pinned Node.js and Terraform versions
 - `.github/workflows/pr-checks.yml`: Pull request checks
 
 ## First-time setup
@@ -40,12 +42,15 @@ cd type-words
 mise trust
 mise install
 node --version
+cd app
 npm ci
 ```
 
 Confirm that `node --version` matches `mise.toml`. npm is bundled with Node.js.
 
 ## Local development
+
+Run npm commands from `app/`.
 
 ```sh
 npm run dev
@@ -63,13 +68,13 @@ npm run build
 
 Use `npm run format` to format files and `npm run test:watch` to run tests in watch mode. The lint command checks files without modifying them.
 
-Production builds are written to `dist/`. Run `npm run preview` after building to preview the result locally.
+Production builds are written to `app/dist/`. Run `npm run preview` after building to preview the result locally.
 
 GitHub Actions runs lint, tests, and build on pull requests targeting `main`. When changing Node.js versions, update both `mise.toml` and the CI workflow.
 
 ## Word data
 
-Before starting the app or running checks, create the local word data file:
+From `app/`, create the local word data file before starting the app or running checks:
 
 ```sh
 cp words.json.example words.json
