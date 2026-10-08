@@ -119,3 +119,180 @@ button:disabled {
   margin: 0;
   accent-color: #f4f3e9;
 }
+
+.practice-screen {
+  font-family: "Yomogi", cursive;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.practice-screen h1,
+.practice-screen p {
+  margin: 0;
+}
+.practice-screen h1 {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 400;
+}
+.practice-prompt {
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.practice-screen form {
+  width: min(100%, 48rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.typing-positions {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 0.75rem;
+}
+.typing-characters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1ch;
+  font-family: monospace;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+}
+.typing-character {
+  position: relative;
+  width: 1ch;
+  border-bottom: 3px solid transparent;
+}
+.typing-character.correct {
+  color: #b1c1b9;
+}
+.typing-character.incorrect {
+  color: #ffb4b4;
+  text-decoration: underline wavy;
+}
+.typing-character.current {
+  border-bottom-color: #f4f3e9;
+  background: #ffffff24;
+}
+.typing-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+  border: 0;
+}
+.typing-characters {
+  cursor: text;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+.enter-hint {
+  position: absolute;
+  left: calc(100% + 1.5rem);
+  top: 50%;
+  translate: 0 -50%;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  animation: enter-pulse 1.5s ease-in-out infinite;
+}
+@keyframes enter-pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .enter-hint {
+    animation: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.long-text .enter-hint {
+  left: 50%;
+  top: calc(100% + 0.125rem);
+  translate: -50% 0;
+}
+.typing-positions.long-text {
+  margin-bottom: 2.5rem;
+}
+@media (max-width: 40rem) {
+  .enter-hint {
+    left: 50%;
+    top: calc(100% + 0.125rem);
+    translate: -50% 0;
+  }
+  .typing-positions {
+    margin-bottom: 2.5rem;
+  }
+}
+
+.practice-screen .question-progress {
+  margin-bottom: 0.75rem;
+}
+.practice-screen .practice-prompt {
+  margin-bottom: 0.25rem;
+}
+#typing-instructions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.5em;
+  max-width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: #c4cec7;
+}
+.practice-screen form > button {
+  margin-top: 1.75rem;
+}
+
+@media (max-width: 40rem) {
+  #typing-instructions {
+    flex-direction: column;
+    row-gap: 0.125rem;
+    line-height: 1.6;
+  }
+  .practice-screen {
+    gap: 0.625rem;
+    padding: 1.5rem 1rem;
+  }
+  .practice-screen form > button {
+    margin-top: 1.25rem;
+  }
+}
+
+.typing-word {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.punctuation-hint {
+  position: absolute;
+  inset-inline: 0;
+  top: -0.3em;
+  color: #f4f3e9;
+  opacity: 0.45;
+  pointer-events: none;
+}

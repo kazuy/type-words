@@ -10,8 +10,14 @@ const settings: PracticeSettings = {
   promptMode: "ja-to-en",
 };
 
-test("displays supplied settings and a disabled practice button", () => {
-  render(<PracticeSettingsPage settings={settings} onChange={vi.fn()} />);
+test("displays supplied settings and an enabled game button", () => {
+  render(
+    <PracticeSettingsPage
+      settings={settings}
+      onChange={vi.fn()}
+      onStart={vi.fn()}
+    />,
+  );
   expect(screen.getByRole("heading", { name: "ゲームの設定" })).toHaveFocus();
   for (const name of ["問題数", "練習内容", "出題方向"]) {
     expect(screen.getByRole("group", { name })).toBeVisible();
@@ -19,7 +25,9 @@ test("displays supplied settings and a disabled practice button", () => {
   for (const name of ["15問", "文章", "日本語 → 英語"]) {
     expect(screen.getByRole("radio", { name })).toBeChecked();
   }
-  expect(screen.getByRole("button", { name: "練習をはじめる" })).toBeDisabled();
+  expect(
+    screen.getByRole("button", { name: "ゲームをはじめる" }),
+  ).toBeEnabled();
 });
 
 test.each([
@@ -28,7 +36,26 @@ test.each([
   { label: "英語 → 英語", change: { promptMode: "en-to-en" } },
 ])("updates $label while preserving other settings", ({ label, change }) => {
   const onChange = vi.fn();
-  render(<PracticeSettingsPage settings={settings} onChange={onChange} />);
+  render(
+    <PracticeSettingsPage
+      settings={settings}
+      onChange={onChange}
+      onStart={vi.fn()}
+    />,
+  );
   fireEvent.click(screen.getByRole("radio", { name: label }));
   expect(onChange).toHaveBeenCalledExactlyOnceWith({ ...settings, ...change });
+});
+
+test("starts a game when the start button is clicked", () => {
+  const onStart = vi.fn();
+  render(
+    <PracticeSettingsPage
+      settings={settings}
+      onChange={vi.fn()}
+      onStart={onStart}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
+  expect(onStart).toHaveBeenCalledOnce();
 });

@@ -18,9 +18,14 @@ export type PracticeSettings = {
 type Props = {
   settings: PracticeSettings;
   onChange: (settings: PracticeSettings) => void;
+  onStart: () => void;
 };
 
-export default function PracticeSettingsPage({ settings, onChange }: Props) {
+export default function PracticeSettingsPage({
+  settings,
+  onChange,
+  onStart,
+}: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     heading.current?.focus();
@@ -43,8 +48,8 @@ export default function PracticeSettingsPage({ settings, onChange }: Props) {
         value={settings.promptMode}
         onChange={(promptMode) => onChange({ ...settings, promptMode })}
       />
-      <button type="button" disabled>
-        練習をはじめる
+      <button type="button" onClick={onStart}>
+        ゲームをはじめる
       </button>
     </main>
   );

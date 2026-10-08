@@ -1,0 +1,176 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { expect, test, vi } from "vitest";
+import { sampleWords } from "../../src/domain/practice/wordEntry";
+import type { PracticeSettings } from "../../src/pages/PracticeSettingsPage";
+import TypingPracticePage from "../../src/pages/TypingPracticePage";
+
+const settings: PracticeSettings = {
+  questionCount: 10,
+  contentType: "word",
+  promptMode: "en-to-en",
+};
+function type(value: string) {
+  fireEvent.change(screen.getByRole("textbox"), { target: { value } });
+}
+function submit() {
+  const form = screen.getByRole("textbox").closest("form");
+  if (!form) throw new Error("Missing typing form");
+  fireEvent.submit(form);
+}
+
+test("shows placeholders and current position, retains mistakes, and allows deletion", () => {
+  const { container } = render(
+    <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
+  );
+  expect(screen.getByRole("textbox")).toHaveFocus();
+  expect(container.querySelectorAll(".untyped")).toHaveLength(5);
+  type("xp");
+  expect(container.querySelector(".incorrect")).toHaveTextContent("x");
+  expect(container.querySelector(".correct")).toHaveTextContent("p");
+  expect(container.querySelectorAll(".typing-character")[2]).toHaveClass(
+    "current",
+  );
+  // The native text input handles Backspace and sends the shortened value.
+  type("x");
+  expect(container.querySelectorAll(".typing-character")[1]).toHaveClass(
+    "current",
+  );
+  type("");
+  expect(container.querySelector(".incorrect")).toBeNull();
+});
+test("blocks incomplete and incorrect answers until every character is correct", () => {
+  render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
+  type("app");
+  submit();
+  expect(screen.getByText("1 / 10 問")).toBeVisible();
+  expect(screen.queryByRole("status")).toBeNull();
+  expect(screen.getByRole("button")).toBeDisabled();
+  type("xxxxxextra");
+  expect(screen.getByRole("textbox")).toHaveValue("xxxxx");
+  expect(screen.queryByRole("status")).toBeNull();
+  expect(screen.getByRole("button")).toBeDisabled();
+  submit();
+  expect(screen.getByText("1 / 10 問")).toBeVisible();
+  type("apple");
+  expect(screen.getByRole("status")).toHaveTextContent("Enter");
+  expect(screen.getByRole("button")).toBeEnabled();
+  submit();
+  expect(screen.getByText("2 / 10 問")).toBeVisible();
+  expect(screen.getByRole("textbox")).toHaveValue("");
+});
+test("displays target case and accepts spaces, commas, and periods", () => {
+  const { container } = render(
+    <TypingPracticePage
+      settings={{ ...settings, contentType: "sentence" }}
+      onFinish={vi.fn()}
+    />,
+  );
+  type("this is an apple.");
+  expect(container.querySelector(".correct")).toHaveTextContent("T");
+  expect(container.querySelector(".incorrect")).toBeNull();
+  expect(screen.getByRole("button")).toBeEnabled();
+  type("this is an apple");
+  expect(screen.getByRole("button")).toBeDisabled();
+});
+test.each([10, 15, 20] as const)(
+  "finishes only after %i questions and includes sentence punctuation",
+  (questionCount) => {
+    const onFinish = vi.fn();
+    render(
+      <TypingPracticePage
+        settings={{
+          ...settings,
+          questionCount,
+          contentType: "sentence",
+          promptMode: "ja-to-en",
+        }}
+        onFinish={onFinish}
+      />,
+    );
+    for (const entry of sampleWords.slice(0, questionCount)) {
+      expect(screen.getByText(entry.sentences[0].ja)).toBeVisible();
+      expect(onFinish).not.toHaveBeenCalled();
+      type(entry.sentences[0].en.toLowerCase());
+      submit();
+    }
+    expect(onFinish).toHaveBeenCalledOnce();
+  },
+);
+test("does not submit while an IME composition is active", () => {
+  render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
+  type("apple");
+  fireEvent.compositionStart(screen.getByRole("textbox"));
+  submit();
+  expect(screen.getByText("1 / 10 問")).toBeVisible();
+  fireEvent.compositionEnd(screen.getByRole("textbox"));
+  submit();
+  expect(screen.getByText("2 / 10 問")).toBeVisible();
+});
+
+test("tracks the native caret after Home, middle insertion, and Backspace", () => {
+  const { container } = render(
+    <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
+  );
+  const input = screen.getByRole("textbox") as HTMLInputElement;
+  type("app");
+  input.setSelectionRange(0, 0);
+  fireEvent.select(input);
+  expect(container.querySelectorAll(".typing-character")[0]).toHaveClass(
+    "current",
+  );
+  fireEvent.change(input, {
+    target: { value: "xapp", selectionStart: 1, selectionEnd: 1 },
+  });
+  expect(container.querySelectorAll(".typing-character")[1]).toHaveClass(
+    "current",
+  );
+  fireEvent.change(input, {
+    target: { value: "app", selectionStart: 0, selectionEnd: 0 },
+  });
+  expect(container.querySelectorAll(".typing-character")[0]).toHaveClass(
+    "current",
+  );
+});
+
+test("ignores Japanese input and discards IME edits without losing accepted input", () => {
+  const { container } = render(
+    <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
+  );
+  const input = screen.getByRole("textbox");
+  type("aりんごp");
+  expect(input).toHaveValue("ap");
+  fireEvent.compositionStart(input);
+  type("apり");
+  expect(container.querySelectorAll(".correct")).toHaveLength(2);
+  expect(container.querySelector(".incorrect")).toBeNull();
+  type("apりんご");
+  fireEvent.compositionEnd(input, { data: "りんご" });
+  expect(input).toHaveValue("ap");
+  type("apple");
+  expect(screen.getByRole("button")).toBeEnabled();
+  expect(
+    container.querySelector(".typing-positions #enter-hint"),
+  ).not.toBeNull();
+});
+
+test("skips sentence spaces and keeps the caret on the next editable character", () => {
+  const { container } = render(
+    <TypingPracticePage
+      settings={{ ...settings, contentType: "sentence" }}
+      onFinish={vi.fn()}
+    />,
+  );
+  type("This");
+  expect(container.querySelectorAll(".typing-word")).toHaveLength(4);
+  expect(container.querySelectorAll(".typing-character")[4]).toHaveClass(
+    "current",
+  );
+  type("Thisi");
+  type("This");
+  expect(container.querySelectorAll(".typing-character")[4]).toHaveClass(
+    "current",
+  );
+  type("Thisisanapple.");
+  expect(screen.getByRole("button")).toBeEnabled();
+  expect(screen.getByRole("textbox")).toHaveValue("Thisisanapple.");
+});
