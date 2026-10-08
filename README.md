@@ -1,6 +1,6 @@
 # type-words
 
-type-words is an English typing practice project built with React and TypeScript. The app currently displays a chalkboard-inspired top screen titled 「英語タイピング」 with a start button.
+type-words is an English typing practice project built with React and TypeScript, with a chalkboard-inspired interface.
 
 ## Architecture
 
@@ -19,6 +19,8 @@ Cloudflare Pages Git integration handles production deployment from `main`. GitH
 ## Project structure
 
 - `src/`: React and TypeScript UI components and styles
+  - `pages/`: Top and practice settings screens
+  - `components/`: Individual practice settings and shared radio controls
 - `public/`: Favicons and Web App Manifest
 - `test/`: Tests using Vitest and React Testing Library
 - `index.html`: HTML entry point

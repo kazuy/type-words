@@ -14,7 +14,8 @@ body {
   margin: 0;
 }
 
-.top-screen {
+.top-screen,
+.settings-screen {
   font-family: "Yomogi", cursive;
   min-height: 100svh;
   display: flex;
@@ -26,14 +27,15 @@ body {
   text-align: center;
 }
 
-.top-screen h1 {
+.top-screen h1,
+.settings-screen h1 {
   margin: 0;
   font-size: clamp(2.5rem, 10vw, 4.5rem);
   font-weight: 400;
   letter-spacing: 0.02em;
 }
 
-.top-screen button {
+button {
   max-width: 100%;
   padding: 0.875rem 1.75rem;
   border: 2px solid currentColor;
@@ -46,11 +48,74 @@ body {
   cursor: pointer;
 }
 
-.top-screen button:hover {
+button:hover:not(:disabled) {
   background-color: #ffffff14;
 }
 
-.top-screen button:focus-visible {
+button:focus-visible {
   outline: 3px solid #f4f3e9;
   outline-offset: 5px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-screen {
+  gap: 1.5rem;
+}
+
+.settings-screen > button {
+  margin-top: 0.75rem;
+}
+
+.settings-screen h1 {
+  font-size: clamp(2rem, 8vw, 3rem);
+}
+
+.settings-screen fieldset {
+  width: min(100%, 32rem);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings-screen legend {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.setting-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.setting-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: 2px solid #f4f3e966;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.setting-options label:has(input:checked) {
+  border-color: #f4f3e9;
+  background-color: #ffffff24;
+}
+
+.setting-options label:has(input:focus-visible) {
+  outline: 3px solid #f4f3e9;
+  outline-offset: 4px;
+}
+
+.setting-options input {
+  margin: 0;
+  accent-color: #f4f3e9;
 }
