@@ -21,7 +21,7 @@ Cloudflare Pages Git integration handles production deployment from `main`. GitH
 - `src/`: React and TypeScript UI components and styles
   - `pages/`: Top, practice settings, and typing practice screens
   - `components/`: Individual practice settings and shared radio controls
-- `src/domain/practice/`: Learning data types, practice question generation, and typing text normalization
+- `src/domain/practice/`: Word entry types, practice question generation, and typing text normalization
 - `public/`: Favicons and Web App Manifest
 - `test/`: Tests using Vitest and React Testing Library
 - `index.html`: HTML entry point
@@ -67,14 +67,14 @@ Production builds are written to `dist/`. Run `npm run preview` after building t
 
 GitHub Actions runs lint, tests, and build on pull requests targeting `main`. When changing Node.js versions, update both `mise.toml` and the CI workflow.
 
-## Learning data
+## Word data
 
-Before starting the app or running checks, create the local learning data file:
+Before starting the app or running checks, create the local word data file:
 
 ```sh
-cp learningData.json.example learningData.json
+cp words.json.example words.json
 ```
 
-Replace the example with your learning data using the same structure. `learningData.json` is ignored by Git; CI uses the example. Production builds require the real file to be supplied separately before building, including when using Cloudflare Pages Git integration.
+Replace the example with your words and sentences using the same structure. `words.json` is ignored by Git; CI uses the example. Production builds require the real file to be supplied separately before building, including when using Cloudflare Pages Git integration.
 
 The data is bundled into JavaScript without a standalone JSON URL, but can be inspected in the delivered JavaScript.

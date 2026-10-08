@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { learningData } from "../../src/domain/practice/wordEntry";
+import { words } from "../../src/domain/practice/words";
 import type { PracticeSettings } from "../../src/pages/PracticeSettingsPage";
 import TypingPracticePage from "../../src/pages/TypingPracticePage";
 
-vi.mock("../../src/domain/practice/wordEntry", () => ({
-  learningData: Array.from({ length: 20 }, (_, index) => ({
+vi.mock("../../src/domain/practice/words", () => ({
+  words: Array.from({ length: 20 }, (_, index) => ({
     number: index + 1,
     word: { en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` },
     sentences: [
@@ -104,7 +104,7 @@ test.each([10, 15, 20] as const)(
         onFinish={onFinish}
       />,
     );
-    for (const entry of learningData.slice(0, questionCount)) {
+    for (const entry of words.slice(0, questionCount)) {
       expect(screen.getByText(entry.sentences[0].ja)).toBeVisible();
       expect(onFinish).not.toHaveBeenCalled();
       type(entry.sentences[0].en.toLowerCase());
@@ -194,7 +194,7 @@ test("skips sentence spaces and keeps the caret on the next editable character",
 
 test("caps progress and finishes when fewer candidates than requested are available", () => {
   const onFinish = vi.fn();
-  const entry = learningData[0];
+  const entry = words[0];
   const original = entry.sentences;
   entry.sentences = [];
   try {
@@ -205,7 +205,7 @@ test("caps progress and finishes when fewer candidates than requested are availa
       />,
     );
     expect(screen.getByText("1 / 19 問")).toBeVisible();
-    for (const item of learningData.slice(1)) {
+    for (const item of words.slice(1)) {
       type(item.sentences[0].en);
       submit();
     }
@@ -232,8 +232,8 @@ test("retains the generated questions across input and parent rerenders", () => 
 });
 
 test("allows returning to settings when there are no sentence candidates", () => {
-  const originals = learningData.map((entry) => entry.sentences);
-  for (const entry of learningData) entry.sentences = [];
+  const originals = words.map((entry) => entry.sentences);
+  for (const entry of words) entry.sentences = [];
   try {
     const onFinish = vi.fn();
     render(
@@ -247,14 +247,14 @@ test("allows returning to settings when there are no sentence candidates", () =>
     fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
     expect(onFinish).toHaveBeenCalledOnce();
   } finally {
-    learningData.forEach((entry, index) => {
+    words.forEach((entry, index) => {
       entry.sentences = originals[index];
     });
   }
 });
 
-test("uses multiple sentences from one learning entry as separate questions", () => {
-  const entry = learningData[0];
+test("uses multiple sentences from one word entry as separate questions", () => {
+  const entry = words[0];
   const original = entry.sentences;
   entry.sentences = [
     ...original,
@@ -278,7 +278,7 @@ test("uses multiple sentences from one learning entry as separate questions", ()
     type("Another sentence.");
     expect(screen.getByRole("button")).toBeEnabled();
     submit();
-    expect(screen.getByText(learningData[1].sentences[0].ja)).toBeVisible();
+    expect(screen.getByText(words[1].sentences[0].ja)).toBeVisible();
   } finally {
     entry.sentences = original;
   }

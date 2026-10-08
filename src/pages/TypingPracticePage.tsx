@@ -1,14 +1,14 @@
 import { useState } from "react";
 import TypingForm from "../components/TypingForm";
 import { generatePracticeQuestions } from "../domain/practice/questions";
-import { learningData } from "../domain/practice/wordEntry";
+import { words } from "../domain/practice/words";
 import type { PracticeSettings } from "./PracticeSettingsPage";
 
 type Props = { settings: PracticeSettings; onFinish: () => void };
 
 export default function TypingPracticePage({ settings, onFinish }: Props) {
   const [questions] = useState(() =>
-    generatePracticeQuestions(learningData, settings, Math.random),
+    generatePracticeQuestions(words, settings, Math.random),
   );
   const [questionIndex, setQuestionIndex] = useState(0);
   const question = questions[questionIndex];

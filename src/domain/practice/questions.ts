@@ -1,5 +1,5 @@
 import { normalizePracticeText } from "./typing";
-import type { WordEntry } from "./wordEntry";
+import type { WordEntry } from "./words";
 
 type PracticeQuestionSettings = {
   questionCount: number;
@@ -10,11 +10,11 @@ type PracticeQuestionSettings = {
 export type PracticeQuestion = { prompt: string; target: string };
 
 export function generatePracticeQuestions(
-  learningEntries: readonly WordEntry[],
+  wordEntries: readonly WordEntry[],
   settings: PracticeQuestionSettings,
   random: () => number,
 ): PracticeQuestion[] {
-  const candidates = learningEntries.flatMap((entry) =>
+  const candidates = wordEntries.flatMap((entry) =>
     settings.contentType === "word" ? [entry.word] : entry.sentences,
   );
 

@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import App from "../src/App";
 
-vi.mock("../src/domain/practice/wordEntry", () => ({
-  learningData: Array.from({ length: 20 }, (_, index) => ({
+vi.mock("../src/domain/practice/words", () => ({
+  words: Array.from({ length: 20 }, (_, index) => ({
     number: index + 1,
     word: { en: `word${index}`, ja: `単語${index}` },
     sentences: [{ en: `Sentence ${index}.`, ja: `例文${index}` }],

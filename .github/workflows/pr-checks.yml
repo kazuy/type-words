@@ -26,8 +26,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare example learning data
-        run: cp learningData.json.example learningData.json
+      - name: Prepare example word data
+        run: cp words.json.example words.json
 
       - name: Lint
         run: npm run lint

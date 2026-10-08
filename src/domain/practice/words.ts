@@ -1,4 +1,4 @@
-import data from "../../../learningData.json";
+import wordData from "../../../words.json";
 
 export type WordEntry = {
   number: number;
@@ -6,4 +6,4 @@ export type WordEntry = {
   sentences: { en: string; ja: string }[];
 };
 
-export const learningData: WordEntry[] = data;
+export const words: WordEntry[] = wordData;

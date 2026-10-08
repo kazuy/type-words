@@ -1,9 +1,6 @@
 import { expect, test } from "vitest";
 import { generatePracticeQuestions } from "../../src/domain/practice/questions";
-import {
-  learningData,
-  type WordEntry,
-} from "../../src/domain/practice/wordEntry";
+import { type WordEntry, words } from "../../src/domain/practice/words";
 
 const entries: WordEntry[] = [
   {
@@ -21,9 +18,9 @@ const entries: WordEntry[] = [
   },
 ];
 
-test("loads bilingual learning entries from JSON", () => {
-  expect(learningData.length).toBeGreaterThan(0);
-  for (const entry of learningData) {
+test("loads bilingual word entries from JSON", () => {
+  expect(words.length).toBeGreaterThan(0);
+  for (const entry of words) {
     expect(entry.number).toEqual(expect.any(Number));
     expect(entry.word).toEqual({
       en: expect.any(String),

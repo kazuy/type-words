@@ -12,5 +12,5 @@ dist/
 # Local logs
 *.log
 
-# Private learning data
-/learningData.json
+# Private word data
+/words.json
