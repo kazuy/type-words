@@ -1,8 +1,18 @@
 import { getTypingWords, isMatchingCharacter } from "../domain/practice/typing";
 
-type Props = { target: string; input: string; cursor: number };
+type Props = {
+  target: string;
+  input: string;
+  cursor: number;
+  hintIndex?: number | null;
+};
 
-export default function TypingCharacters({ target, input, cursor }: Props) {
+export default function TypingCharacters({
+  target,
+  input,
+  cursor,
+  hintIndex = null,
+}: Props) {
   const words = getTypingWords(target);
 
   return (
@@ -26,10 +36,14 @@ export default function TypingCharacters({ target, input, cursor }: Props) {
                 className={`typing-character ${typed === undefined ? "untyped" : correct ? "correct" : "incorrect"} ${index === cursor ? "current" : ""}`}
               >
                 {displayed}
-                {typed === undefined &&
+                {hintIndex === index ? (
+                  <span className="character-hint">{character}</span>
+                ) : (
+                  typed === undefined &&
                   (character === "," || character === ".") && (
                     <span className="punctuation-hint">{character}</span>
-                  )}
+                  )
+                )}
               </span>
             );
           })}

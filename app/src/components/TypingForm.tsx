@@ -3,16 +3,28 @@ import {
   checkTypingAnswer,
   filterTypingInput,
   getTypingTarget,
+  isMatchingCharacter,
 } from "../domain/practice/typing";
 import TypingCharacters from "./TypingCharacters";
 
-type Props = { target: string; submitLabel: string; onSubmit: () => void };
+type Props = {
+  target: string;
+  submitLabel: string;
+  onSubmit: () => void;
+  hintsEnabled?: boolean;
+};
 
-export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
+export default function TypingForm({
+  target,
+  submitLabel,
+  onSubmit,
+  hintsEnabled = false,
+}: Props) {
   const [input, setInput] = useState("");
   const [compositionDraft, setCompositionDraft] = useState<string | null>(null);
   const compositionCursor = useRef(0);
   const [cursor, setCursor] = useState(0);
+  const [hintIndex, setHintIndex] = useState<number | null>(null);
   const composing = useRef(false);
   const [selectionToRestore, setSelectionToRestore] = useState<{
     position: number;
@@ -35,6 +47,8 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
 
   const typingTarget = getTypingTarget(target);
   const { mismatchPositions, complete } = checkTypingAnswer(input, target);
+  const hintDisabled =
+    complete || compositionDraft !== null || cursor >= typingTarget.length;
 
   return (
     <form
@@ -45,16 +59,46 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
         onSubmit();
       }}
     >
-      <div
-        className={`typing-positions ${target.length > 20 ? "long-text" : ""}`}
-      >
-        <TypingCharacters target={target} input={input} cursor={cursor} />
-        {complete && compositionDraft === null && (
-          <p id="enter-hint" className="enter-hint" role="status">
-            Enter ↵
-          </p>
+      <div className="typing-row">
+        <div
+          className={`typing-positions ${target.length > 20 ? "long-text" : ""}`}
+        >
+          <TypingCharacters
+            target={target}
+            input={input}
+            cursor={cursor}
+            hintIndex={hintIndex}
+          />
+          {complete && compositionDraft === null && (
+            <p id="enter-hint" className="enter-hint" role="status">
+              Enter ↵
+            </p>
+          )}
+        </div>
+        {hintsEnabled && (
+          <button
+            type="button"
+            className="hint-button"
+            aria-label="ヒントを表示"
+            title="ヒントを表示"
+            disabled={hintDisabled}
+            onClick={() => {
+              setHintIndex(cursor);
+              inputRef.current?.focus();
+              inputRef.current?.setSelectionRange(cursor, cursor);
+            }}
+          >
+            <img src="/question.svg" alt="" width="24" height="24" />
+          </button>
         )}
       </div>
+      {hintsEnabled && (
+        <p className="sr-only" role="status" aria-live="polite">
+          {hintIndex !== null
+            ? `${hintIndex + 1}文字目のヒント: ${typingTarget[hintIndex]}`
+            : ""}
+        </p>
+      )}
       <label className="sr-only" htmlFor="typing-input">
         英語を入力
       </label>
@@ -81,6 +125,12 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
             event.target.value.slice(0, event.target.selectionStart ?? 0),
           ).length;
           const nextPosition = Math.min(position, value.length);
+          if (
+            hintIndex !== null &&
+            value[hintIndex] !== undefined &&
+            isMatchingCharacter(value[hintIndex], typingTarget[hintIndex])
+          )
+            setHintIndex(null);
           if (value !== event.target.value) {
             setSelectionToRestore({ position: nextPosition });
           }
@@ -89,10 +139,14 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
           setCursor(nextPosition);
         }}
         onSelect={(event) => {
-          if (!composing.current)
-            setCursor(
-              Math.min(event.currentTarget.selectionStart ?? 0, input.length),
-            );
+          if (composing.current) return;
+
+          const nextPosition = Math.min(
+            event.currentTarget.selectionStart ?? 0,
+            input.length,
+          );
+          if (nextPosition !== cursor) setHintIndex(null);
+          setCursor(nextPosition);
         }}
         onCompositionStart={() => {
           composing.current = true;

@@ -7,7 +7,11 @@ type PracticeQuestionSettings = {
   promptMode: "en-to-en" | "ja-to-en";
 };
 
-export type PracticeQuestion = { prompt: string; target: string };
+export type PracticeQuestion = {
+  prompt: string;
+  target: string;
+  translation: string;
+};
 
 export function generatePracticeQuestions(
   wordEntries: readonly WordEntry[],
@@ -32,6 +36,7 @@ export function generatePracticeQuestions(
     return {
       prompt: settings.promptMode === "en-to-en" ? target : content.ja,
       target,
+      translation: content.ja,
     };
   });
 }
