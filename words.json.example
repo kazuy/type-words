@@ -1,0 +1,15 @@
+[
+  {
+    "number": 1,
+    "word": {
+      "en": "example",
+      "ja": "例"
+    },
+    "sentences": [
+      {
+        "en": "This is an example.",
+        "ja": "これは例です。"
+      }
+    ]
+  }
+]

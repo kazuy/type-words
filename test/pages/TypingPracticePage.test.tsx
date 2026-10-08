@@ -1,8 +1,25 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
-import { sampleWords } from "../../src/domain/practice/wordEntry";
+import { beforeEach, expect, test, vi } from "vitest";
+import { words } from "../../src/domain/practice/words";
 import type { PracticeSettings } from "../../src/pages/PracticeSettingsPage";
 import TypingPracticePage from "../../src/pages/TypingPracticePage";
+
+vi.mock("../../src/domain/practice/words", () => ({
+  words: Array.from({ length: 20 }, (_, index) => ({
+    number: index + 1,
+    word: { en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` },
+    sentences: [
+      {
+        en: index === 0 ? "This is an apple." : `Sentence ${index}.`,
+        ja: `例文${index}`,
+      },
+    ],
+  })),
+}));
+
+beforeEach(() => {
+  vi.spyOn(Math, "random").mockReturnValue(0.999);
+});
 
 const settings: PracticeSettings = {
   questionCount: 10,
@@ -87,7 +104,7 @@ test.each([10, 15, 20] as const)(
         onFinish={onFinish}
       />,
     );
-    for (const entry of sampleWords.slice(0, questionCount)) {
+    for (const entry of words.slice(0, questionCount)) {
       expect(screen.getByText(entry.sentences[0].ja)).toBeVisible();
       expect(onFinish).not.toHaveBeenCalled();
       type(entry.sentences[0].en.toLowerCase());
@@ -173,4 +190,96 @@ test("skips sentence spaces and keeps the caret on the next editable character",
   type("Thisisanapple.");
   expect(screen.getByRole("button")).toBeEnabled();
   expect(screen.getByRole("textbox")).toHaveValue("Thisisanapple.");
+});
+
+test("caps progress and finishes when fewer candidates than requested are available", () => {
+  const onFinish = vi.fn();
+  const entry = words[0];
+  const original = entry.sentences;
+  entry.sentences = [];
+  try {
+    render(
+      <TypingPracticePage
+        settings={{ ...settings, questionCount: 20, contentType: "sentence" }}
+        onFinish={onFinish}
+      />,
+    );
+    expect(screen.getByText("1 / 19 問")).toBeVisible();
+    for (const item of words.slice(1)) {
+      type(item.sentences[0].en);
+      submit();
+    }
+    expect(onFinish).toHaveBeenCalledOnce();
+  } finally {
+    entry.sentences = original;
+  }
+});
+
+test("retains the generated questions across input and parent rerenders", () => {
+  const onFinish = vi.fn();
+  const { rerender } = render(
+    <TypingPracticePage settings={settings} onFinish={onFinish} />,
+  );
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  type("app");
+  rerender(
+    <TypingPracticePage settings={{ ...settings }} onFinish={onFinish} />,
+  );
+  expect(document.querySelector(".practice-prompt")).toHaveTextContent("apple");
+  type("apple");
+  submit();
+  expect(document.querySelector(".practice-prompt")).toHaveTextContent("word1");
+});
+
+test("allows returning to settings when there are no sentence candidates", () => {
+  const originals = words.map((entry) => entry.sentences);
+  for (const entry of words) entry.sentences = [];
+  try {
+    const onFinish = vi.fn();
+    render(
+      <TypingPracticePage
+        settings={{ ...settings, contentType: "sentence" }}
+        onFinish={onFinish}
+      />,
+    );
+    expect(screen.getByText("出題できる問題がありません。")).toBeVisible();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+    expect(onFinish).toHaveBeenCalledOnce();
+  } finally {
+    words.forEach((entry, index) => {
+      entry.sentences = originals[index];
+    });
+  }
+});
+
+test("uses multiple sentences from one word entry as separate questions", () => {
+  const entry = words[0];
+  const original = entry.sentences;
+  entry.sentences = [
+    ...original,
+    { en: "Another sentence.", ja: "別の例文です。" },
+  ];
+  try {
+    render(
+      <TypingPracticePage
+        settings={{
+          ...settings,
+          contentType: "sentence",
+          promptMode: "ja-to-en",
+        }}
+        onFinish={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(original[0].ja)).toBeVisible();
+    type(original[0].en);
+    submit();
+    expect(screen.getByText("別の例文です。")).toBeVisible();
+    type("Another sentence.");
+    expect(screen.getByRole("button")).toBeEnabled();
+    submit();
+    expect(screen.getByText(words[1].sentences[0].ja)).toBeVisible();
+  } finally {
+    entry.sentences = original;
+  }
 });

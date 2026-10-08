@@ -11,3 +11,6 @@ dist/
 
 # Local logs
 *.log
+
+# Private word data
+/words.json
