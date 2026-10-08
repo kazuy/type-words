@@ -1,0 +1,2 @@
+cloudflare_account_id = "<ACCOUNT_ID>"
+words_bucket_name     = "<PRIVATE_WORDS_BUCKET_NAME>"

@@ -5,6 +5,10 @@
 .idea/
 .vscode/
 
+# Local environment
+.env
+.env.*
+
 # Dependencies and build output
 node_modules/
 dist/
@@ -15,3 +19,11 @@ dist/
 # Private word data
 /words.json
 /words.json.download
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
