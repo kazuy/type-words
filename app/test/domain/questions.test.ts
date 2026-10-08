@@ -70,6 +70,11 @@ test.each([
     );
     expect(questions.map((question) => question.prompt)).toEqual(prompts);
     expect(questions.map((question) => question.target)).toEqual(targets);
+    expect(questions.map((question) => question.translation)).toEqual(
+      contentType === "word"
+        ? ["りんご", "梨"]
+        : ["これはりんごです。", "赤いです。", "梨です。"],
+    );
   },
 );
 

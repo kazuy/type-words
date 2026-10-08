@@ -32,6 +32,9 @@ export default function TypingPracticePage({ settings, onFinish }: Props) {
         {questionIndex + 1} / {questions.length} 問
       </p>
       <p className="practice-prompt">{question.prompt}</p>
+      {settings.promptMode === "en-to-en" && (
+        <p className="practice-translation">{question.translation}</p>
+      )}
       <TypingForm
         key={questionIndex}
         target={question.target}

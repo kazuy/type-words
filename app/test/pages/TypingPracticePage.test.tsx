@@ -35,6 +35,43 @@ function submit() {
   fireEvent.submit(form);
 }
 
+test.each(["word", "sentence"] as const)(
+  "shows the corresponding Japanese translation in English-to-English %s practice",
+  (contentType) => {
+    render(
+      <TypingPracticePage
+        settings={{ ...settings, contentType }}
+        onFinish={vi.fn()}
+      />,
+    );
+    const content =
+      contentType === "word" ? words[0].word : words[0].sentences[0];
+    expect(screen.getByText(content.en)).toBeVisible();
+    expect(screen.getByText(content.ja)).toBeVisible();
+    type(content.en);
+    submit();
+    const next = contentType === "word" ? words[1].word : words[1].sentences[0];
+    expect(screen.getByText(next.ja)).toBeVisible();
+    expect(screen.queryByText(content.ja)).toBeNull();
+  },
+);
+
+test.each(["word", "sentence"] as const)(
+  "keeps only the Japanese prompt in Japanese-to-English %s practice",
+  (contentType) => {
+    render(
+      <TypingPracticePage
+        settings={{ ...settings, contentType, promptMode: "ja-to-en" }}
+        onFinish={vi.fn()}
+      />,
+    );
+    const content =
+      contentType === "word" ? words[0].word : words[0].sentences[0];
+    expect(screen.getAllByText(content.ja)).toHaveLength(1);
+    expect(screen.queryByText(content.en)).toBeNull();
+  },
+);
+
 test("shows placeholders and current position, retains mistakes, and allows deletion", () => {
   const { container } = render(
     <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
