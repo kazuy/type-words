@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   checkTypingAnswer,
   filterTypingInput,
@@ -13,11 +13,24 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
   const compositionCursor = useRef(0);
   const [cursor, setCursor] = useState(0);
   const composing = useRef(false);
+  const [selectionToRestore, setSelectionToRestore] = useState<{
+    position: number;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  useLayoutEffect(() => {
+    if (selectionToRestore === null || composing.current) return;
+
+    inputRef.current?.setSelectionRange(
+      selectionToRestore.position,
+      selectionToRestore.position,
+    );
+    setSelectionToRestore(null);
+  }, [selectionToRestore]);
 
   const { mismatchPositions, complete } = checkTypingAnswer(input, target);
 
@@ -65,8 +78,13 @@ export default function TypingForm({ target, submitLabel, onSubmit }: Props) {
           const position = filterTypingInput(
             event.target.value.slice(0, event.target.selectionStart ?? 0),
           ).length;
+          const nextPosition = Math.min(position, value.length);
+          if (value !== event.target.value) {
+            setSelectionToRestore({ position: nextPosition });
+          }
+
           setInput(value);
-          setCursor(Math.min(position, value.length));
+          setCursor(nextPosition);
         }}
         onSelect={(event) => {
           if (!composing.current)
