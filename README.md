@@ -1,64 +1,46 @@
 # type-words
 
-type-words is an English typing practice project built with React and TypeScript, with a chalkboard-inspired interface.
+An English typing practice SPA built with React, TypeScript, and Vite, with a chalkboard-inspired interface.
 
 ## Architecture
 
-The app is a fully client-side React SPA, with no backend, database, or authentication. It uses React state without React Router.
-
 ```mermaid
 flowchart LR
-    User["User"] -->|"HTTPS"| Pages["Cloudflare Pages"]
-    Pages --> SPA["React SPA in the browser"]
-    Repo["GitHub Repository"] --> Git["Cloudflare Pages Git Integration"]
-    Git -->|"main branch deployment"| Pages
+    Repo["GitHub: main"] --> Build["Cloudflare Pages build"]
+    Words["R2: word data bucket"] -->|"Authenticated download"| Build
+    Build -->|"Build and deploy"| Pages["Cloudflare Pages"]
+    Pages --> Browser["React SPA in the browser"]
+    Terraform["Local Terraform"] -->|"Manage bucket and disable public access"| Words
+    Terraform <-->|"State read/write"| State["R2: state bucket"]
 ```
 
-Cloudflare Pages Git integration handles production deployment from `main`. GitHub Actions handles quality checks.
+Pages builds automatically from `main`; preview deployments are disabled.
 
-## Project structure
+## Structure
 
-- `app/src/`: React and TypeScript UI components and styles
-  - `pages/`: Top, practice settings, and typing practice screens
-  - `components/`: Individual practice settings and shared radio controls
-- `app/src/domain/practice/`: Word entry types, practice question generation, and typing text normalization
+- `app/src/`: Screens, components, and practice logic under `domain/practice/`
 - `app/public/`: Favicons and Web App Manifest
-- `app/test/`: Tests using Vitest and React Testing Library
-- `app/index.html`: HTML entry point
-- `app/vite.config.ts`: Vite and test configuration
-- `app/biome.json`: Linting and formatting configuration
-- `app/scripts/`: Build preparation scripts
-- `infra/`: Terraform configuration for the private word data bucket
-- `mise.toml`: Pinned Node.js and Terraform versions
-- `.github/workflows/pr-checks.yml`: Pull request checks
+- `app/test/`: Vitest and React Testing Library tests
+- `app/scripts/`: Build preparation
+- `app/`: npm, Vite, TypeScript, and Biome configuration
+- `infra/`: Terraform definitions for the word data bucket and its public access setting
+- `mise.toml`: Node.js and Terraform versions
+- `.github/workflows/pr-checks.yml`: Application checks using example data
 
-## First-time setup
+## Development
 
-Install [mise](https://mise.jdx.dev/getting-started.html) and activate it in your shell, then run:
+Install and activate [mise](https://mise.jdx.dev/getting-started.html), then:
 
 ```sh
 git clone https://github.com/kazuy/type-words.git
 cd type-words
 mise trust
 mise install
-node --version
 cd app
 npm ci
-```
-
-Confirm that `node --version` matches `mise.toml`. npm is bundled with Node.js.
-
-## Local development
-
-Run npm commands from `app/`.
-
-```sh
+cp words.json.example words.json
 npm run dev
 ```
-
-Open the local URL printed by Vite in your browser.
-
-## Checks and formatting
 
 ```sh
 npm run lint
@@ -66,20 +48,41 @@ npm test
 npm run build
 ```
 
-Use `npm run format` to format files and `npm run test:watch` to run tests in watch mode. The lint command checks files without modifying them.
+## Deployment
 
-Production builds are written to `app/dist/`. Run `npm run preview` after building to preview the result locally.
-
-GitHub Actions runs lint, tests, and build on pull requests targeting `main`. When changing Node.js versions, update both `mise.toml` and the CI workflow.
-
-## Word data
-
-From `app/`, create the local word data file before starting the app or running checks:
+Terraform creates the R2 bucket for `words.json`. Run from the repository root:
 
 ```sh
-cp words.json.example words.json
+cp infra/terraform.tfvars.example infra/terraform.tfvars
 ```
 
-Replace the example with your words and sentences using the same structure. `words.json` is ignored by Git; CI uses the example. Production builds require the real file to be supplied separately before building, including when using Cloudflare Pages Git integration.
+```sh
+export AWS_ACCESS_KEY_ID='<STATE_ACCESS_KEY_ID>'
+export AWS_SECRET_ACCESS_KEY='<STATE_SECRET_ACCESS_KEY>'
+export CLOUDFLARE_API_TOKEN='<TERRAFORM_MANAGEMENT_TOKEN>'
 
-The data is bundled into JavaScript without a standalone JSON URL, but can be inspected in the delivered JavaScript.
+mise exec -- terraform -chdir=infra init \
+  -backend-config='bucket=<STATE_BUCKET_NAME>' \
+  -backend-config='endpoints={s3="https://<ACCOUNT_ID>.r2.cloudflarestorage.com"}'
+mise exec -- terraform -chdir=infra fmt -check -diff
+mise exec -- terraform -chdir=infra validate
+mise exec -- terraform -chdir=infra plan -out=terraform.tfplan
+```
+
+Review the plan, then apply it:
+
+```sh
+mise exec -- terraform -chdir=infra apply terraform.tfplan
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY CLOUDFLARE_API_TOKEN
+```
+
+### Build script
+
+Run `npm run build:pages` from `app/`. Configure these R2 environment variables as encrypted secrets in Cloudflare Pages:
+
+| Variable | Value |
+| --- | --- |
+| `R2_ACCOUNT_ID` | Account ID |
+| `R2_BUCKET_NAME` | Word data bucket name |
+| `R2_ACCESS_KEY_ID` | Access Key ID |
+| `R2_SECRET_ACCESS_KEY` | Secret Access Key |
