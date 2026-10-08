@@ -24,3 +24,21 @@ test("preserves selected settings when changing other settings", () => {
     expect(screen.getByRole("radio", { name })).toBeChecked();
   }
 });
+
+test("starts a game, returns to settings after the final answer, and resets a new game", () => {
+  openSettings();
+  fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
+  for (let index = 0; index < 10; index++) {
+    const input = screen.getByRole("textbox");
+    const prompt =
+      document.querySelector(".practice-prompt")?.textContent ?? "";
+    fireEvent.change(input, { target: { value: prompt } });
+    const form = input.closest("form");
+    if (!form) throw new Error("Missing typing form");
+    fireEvent.submit(form);
+  }
+  expect(screen.getByRole("heading", { name: "ゲームの設定" })).toHaveFocus();
+  fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
+  expect(screen.getByText("1 / 10 問")).toBeVisible();
+  expect(screen.getByRole("textbox")).toHaveValue("");
+});
