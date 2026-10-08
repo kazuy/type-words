@@ -38,6 +38,7 @@ export default function TypingPracticePage({ settings, onFinish }: Props) {
       <TypingForm
         key={questionIndex}
         target={question.target}
+        hintsEnabled={settings.promptMode === "ja-to-en"}
         submitLabel={lastQuestion ? "ゲームを終了" : "次の問題へ"}
         onSubmit={() => {
           if (lastQuestion) onFinish();

@@ -157,6 +157,30 @@ button:disabled {
   max-width: 100%;
   margin-bottom: 0.75rem;
 }
+.typing-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  max-width: 100%;
+}
+.typing-row:has(.hint-button) {
+  grid-template-columns: 3.5rem minmax(0, max-content) 3.5rem;
+  margin-bottom: 2.5rem;
+}
+.hint-button {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem;
+  border: 0;
+}
+.hint-button img {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
 .typing-characters {
   display: flex;
   flex-wrap: wrap;
@@ -229,7 +253,8 @@ button:disabled {
   border: 0;
 }
 
-.long-text .enter-hint {
+.long-text .enter-hint,
+.typing-row:has(.hint-button) .enter-hint {
   left: 50%;
   top: calc(100% + 0.125rem);
   translate: -50% 0;
@@ -246,6 +271,11 @@ button:disabled {
   .typing-positions {
     margin-bottom: 2.5rem;
   }
+}
+.typing-row:has(.hint-button) .typing-positions {
+  grid-column: 2;
+  grid-row: 1;
+  margin-bottom: 0;
 }
 
 .practice-screen .question-progress {
@@ -292,11 +322,15 @@ button:disabled {
   gap: 0.25rem;
 }
 
-.punctuation-hint {
+.punctuation-hint,
+.character-hint {
   position: absolute;
   inset-inline: 0;
   top: -0.3em;
   color: #f4f3e9;
   opacity: 0.45;
   pointer-events: none;
+}
+.character-hint {
+  opacity: 0.8;
 }

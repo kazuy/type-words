@@ -313,10 +313,38 @@ test("uses multiple sentences from one word entry as separate questions", () => 
     submit();
     expect(screen.getByText("別の例文です。")).toBeVisible();
     type("Another sentence.");
-    expect(screen.getByRole("button")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "次の問題へ" })).toBeEnabled();
     submit();
     expect(screen.getByText(words[1].sentences[0].ja)).toBeVisible();
   } finally {
     entry.sentences = original;
   }
+});
+
+test.each(["word", "sentence"] as const)(
+  "resets hints between Japanese-to-English %s questions",
+  (contentType) => {
+    const { container } = render(
+      <TypingPracticePage
+        settings={{ ...settings, contentType, promptMode: "ja-to-en" }}
+        onFinish={vi.fn()}
+      />,
+    );
+    const hint = screen.getByRole("button", { name: "ヒントを表示" });
+    expect(container.querySelector(".character-hint")).toBeNull();
+    fireEvent.click(hint);
+    expect(container.querySelectorAll(".character-hint")).toHaveLength(1);
+    const content =
+      contentType === "word" ? words[0].word : words[0].sentences[0];
+    type(content.en);
+    expect(hint).toBeDisabled();
+    submit();
+    expect(container.querySelector(".character-hint")).toBeNull();
+    expect(screen.getByRole("button", { name: "ヒントを表示" })).toBeEnabled();
+  },
+);
+
+test("does not offer hints in English-to-English mode", () => {
+  render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
+  expect(screen.queryByRole("button", { name: "ヒントを表示" })).toBeNull();
 });
