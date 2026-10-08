@@ -21,7 +21,7 @@ Cloudflare Pages Git integration handles production deployment from `main`. GitH
 - `src/`: React and TypeScript UI components and styles
   - `pages/`: Top, practice settings, and typing practice screens
   - `components/`: Individual practice settings and shared radio controls
-- `src/domain/practice/`: Fixed bilingual fruit samples and typing text normalization
+- `src/domain/practice/`: Learning data types, practice question generation, and typing text normalization
 - `public/`: Favicons and Web App Manifest
 - `test/`: Tests using Vitest and React Testing Library
 - `index.html`: HTML entry point
