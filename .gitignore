@@ -11,3 +11,6 @@ dist/
 
 # Local logs
 *.log
+
+# Private learning data
+/learningData.json

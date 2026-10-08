@@ -66,3 +66,15 @@ Use `npm run format` to format files and `npm run test:watch` to run tests in wa
 Production builds are written to `dist/`. Run `npm run preview` after building to preview the result locally.
 
 GitHub Actions runs lint, tests, and build on pull requests targeting `main`. When changing Node.js versions, update both `mise.toml` and the CI workflow.
+
+## Learning data
+
+Before starting the app or running checks, create the local learning data file:
+
+```sh
+cp learningData.json.example learningData.json
+```
+
+Replace the example with your learning data using the same structure. `learningData.json` is ignored by Git; CI uses the example. Production builds require the real file to be supplied separately before building, including when using Cloudflare Pages Git integration.
+
+The data is bundled into JavaScript without a standalone JSON URL, but can be inspected in the delivered JavaScript.

@@ -1,3 +1,5 @@
+import data from "../../../learningData.json";
+
 export type WordEntry = {
   number: number;
   word: { en: string; ja: string };
@@ -69,3 +71,5 @@ export const sampleWords: WordEntry[] = fruits.map(
     sentences: [{ en: sentenceEn, ja: sentenceJa }],
   }),
 );
+
+export const learningData: WordEntry[] = data;
