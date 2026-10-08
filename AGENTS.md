@@ -62,3 +62,43 @@
   rather than adding blank lines mechanically. Do not add blank lines solely
   because a function or control-flow block starts, a `case` or `default` label
   appears, or a block ends.
+
+## Terraform
+
+### Running commands
+
+Terraform is managed with mise. Run Terraform commands from the repository
+root through `mise exec` and use `-chdir=infra`.
+
+### Validation
+
+After changing Terraform configuration, run:
+
+```sh
+mise exec -- terraform -chdir=infra fmt -check -diff
+mise exec -- terraform -chdir=infra validate
+git diff --check
+```
+
+### Style
+
+- Group attributes by logical concern, such as iteration, resource identity,
+  configuration, and lifecycle behavior. Insert a single blank line when the
+  concern changes, but do not add blank lines mechanically at the start or end
+  of a block.
+
+### Safety
+
+- Review deletion behavior for every Terraform-managed resource. When
+  supported, explicitly protect resources whose deletion would remove
+  artifacts, identities, or running services with
+  `deletion_policy = "PREVENT"` or `deletion_protection = true`. Do not rely on
+  a provider's default deletion behavior without deliberate review.
+- For R2 buckets, use Terraform's `lifecycle.prevent_destroy` because the
+  Cloudflare bucket resource does not provide a deletion-protection attribute.
+- Manage only the private word data bucket and its disabled public access in
+  `infra/`. The state bucket, Pages project, and API tokens are managed outside
+  this Terraform configuration.
+- Keep backend settings, actual variable values, credentials, state, and plans
+  out of Git. Never include individual account or resource information in
+  committed examples.
