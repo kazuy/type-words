@@ -166,6 +166,7 @@ button:disabled {
   font-size: clamp(1.5rem, 5vw, 2rem);
 }
 .typing-character {
+  position: relative;
   width: 1ch;
   border-bottom: 3px solid transparent;
 }
@@ -285,4 +286,13 @@ button:disabled {
 .typing-word {
   display: inline-flex;
   gap: 0.25rem;
+}
+
+.punctuation-hint {
+  position: absolute;
+  inset-inline: 0;
+  top: -0.3em;
+  color: #f4f3e9;
+  opacity: 0.45;
+  pointer-events: none;
 }

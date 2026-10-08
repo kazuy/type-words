@@ -26,6 +26,10 @@ export default function TypingCharacters({ target, input, cursor }: Props) {
                 className={`typing-character ${typed === undefined ? "untyped" : correct ? "correct" : "incorrect"} ${index === cursor ? "current" : ""}`}
               >
                 {displayed}
+                {typed === undefined &&
+                  (character === "," || character === ".") && (
+                    <span className="punctuation-hint">{character}</span>
+                  )}
               </span>
             );
           })}
