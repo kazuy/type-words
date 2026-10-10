@@ -119,3 +119,30 @@ test.each([
     }
   },
 );
+
+test.each([".", "?", "!"])(
+  "shows the Enter hint and submits without the trailing %s",
+  (punctuation) => {
+    const onSubmit = vi.fn();
+    const { container } = render(
+      <TypingForm
+        target={`Hello${punctuation}`}
+        submitLabel="次の問題へ"
+        onSubmit={onSubmit}
+      />,
+    );
+    const input = screen.getByRole("textbox");
+    const button = screen.getByRole("button", { name: "次の問題へ" });
+    fireEvent.change(input, { target: { value: "Hell" } });
+    expect(button).toBeDisabled();
+    expect(screen.queryByText("Enter ↵")).not.toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "Hello" } });
+    expect(button).toBeEnabled();
+    expect(screen.getByText("Enter ↵")).toBeVisible();
+    expect(input).toHaveValue("Hello");
+    const form = container.querySelector("form");
+    if (!form) throw new Error("Missing typing form");
+    fireEvent.submit(form);
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith();
+  },
+);

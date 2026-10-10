@@ -22,10 +22,10 @@ export function checkTypingAnswer(input: string, target: string) {
       : [index + 1],
   );
 
+  const remainingText = typingTarget.slice(input.length);
   return {
     mismatchPositions,
-    complete:
-      input.length === typingTarget.length && mismatchPositions.length === 0,
+    complete: mismatchPositions.length === 0 && /^[.?!]*$/.test(remainingText),
   };
 }
 

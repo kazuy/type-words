@@ -6,7 +6,7 @@ import PracticeSettingsPage, {
 } from "../../src/pages/PracticeSettingsPage";
 
 const settings: PracticeSettings = {
-  range: { start: 1, end: 5 },
+  range: { start: 1, end: 35 },
   questionCount: 15,
   contentType: "sentence",
   promptMode: "ja-to-en",
@@ -15,17 +15,17 @@ const settings: PracticeSettings = {
 test("displays supplied settings and an enabled game button", () => {
   render(
     <PracticeSettingsPage
-      bounds={{ start: 1, end: 5 }}
+      bounds={{ start: 1, end: 35 }}
       settings={settings}
       onChange={vi.fn()}
       onStart={vi.fn()}
     />,
   );
   expect(screen.getByRole("heading", { name: "ゲームの設定" })).toHaveFocus();
-  for (const name of ["問題数", "練習内容", "出題方向"]) {
+  for (const name of ["問題数", "出題内容", "表示する言語"]) {
     expect(screen.getByRole("group", { name })).toBeVisible();
   }
-  for (const name of ["15問", "文章", "日本語 → 英語"]) {
+  for (const name of ["15問", "文章", "日本語"]) {
     expect(screen.getByRole("radio", { name })).toBeChecked();
   }
   expect(
@@ -36,12 +36,12 @@ test("displays supplied settings and an enabled game button", () => {
 test.each([
   { label: "20問", change: { questionCount: 20 } },
   { label: "単語", change: { contentType: "word" } },
-  { label: "英語 → 英語", change: { promptMode: "en-to-en" } },
+  { label: "英語", change: { promptMode: "en-to-en" } },
 ])("updates $label while preserving other settings", ({ label, change }) => {
   const onChange = vi.fn();
   render(
     <PracticeSettingsPage
-      bounds={{ start: 1, end: 5 }}
+      bounds={{ start: 1, end: 35 }}
       settings={settings}
       onChange={onChange}
       onStart={vi.fn()}
@@ -55,7 +55,7 @@ test("starts a game when the start button is clicked", () => {
   const onStart = vi.fn();
   render(
     <PracticeSettingsPage
-      bounds={{ start: 1, end: 5 }}
+      bounds={{ start: 1, end: 35 }}
       settings={settings}
       onChange={vi.fn()}
       onStart={onStart}
@@ -72,9 +72,13 @@ vi.mock("../../src/domain/practice/words", () => ({
       words: [{ en: "apple", ja: "りんご" }],
       sentences: [{ en: "An apple.", ja: "りんごです。" }],
     },
-    { number: 2, words: [{ en: "pear", ja: "梨" }], sentences: [] },
-    { number: 3, words: [], sentences: [{ en: "Hello.", ja: "こんにちは。" }] },
-    { number: 5, words: [], sentences: [] },
+    { number: 11, words: [{ en: "pear", ja: "梨" }], sentences: [] },
+    {
+      number: 21,
+      words: [],
+      sentences: [{ en: "Hello.", ja: "こんにちは。" }],
+    },
+    { number: 31, words: [], sentences: [] },
   ],
 }));
 
@@ -85,7 +89,7 @@ function Preview() {
   });
   return (
     <PracticeSettingsPage
-      bounds={{ start: 1, end: 5 }}
+      bounds={{ start: 1, end: 35 }}
       settings={value}
       onChange={setValue}
       onStart={vi.fn()}
@@ -101,7 +105,7 @@ function move(name: string, value: number) {
 
 test("switches to sentences when the range has no words and explains the change", () => {
   render(<Preview />);
-  move("開始番号", 3);
+  move("開始番号", 2);
   expect(screen.getByRole("radio", { name: "単語" })).toBeDisabled();
   expect(screen.getByRole("radio", { name: "文章" })).toBeChecked();
   expect(screen.getByRole("status")).toHaveTextContent("文章に切り替えました");
@@ -113,7 +117,7 @@ test("switches to sentences when the range has no words and explains the change"
 
 test("clears selection for an empty range and restores word selection when the range expands", () => {
   render(<Preview />);
-  move("開始番号", 4);
+  move("開始番号", 3);
   for (const name of ["単語", "文章"]) {
     expect(screen.getByRole("radio", { name })).toBeDisabled();
     expect(screen.getByRole("radio", { name })).not.toBeChecked();
@@ -124,19 +128,19 @@ test("clears selection for an empty range and restores word selection when the r
   expect(
     screen.getByRole("button", { name: "ゲームをはじめる" }),
   ).toBeDisabled();
-  move("開始番号", 1);
+  move("開始番号", 0);
   expect(screen.getByRole("radio", { name: "単語" })).toBeChecked();
   expect(
     screen.getByRole("button", { name: "ゲームをはじめる" }),
   ).toBeEnabled();
 });
 
-test("allows a single number and prevents reversed ranges", () => {
+test("keeps range boundaries on selectable values when sliders cross", () => {
   render(<Preview />);
-  move("終了番号", 2);
-  move("開始番号", 3);
-  expect(screen.getByRole("slider", { name: "開始番号" })).toHaveValue("2");
-  expect(screen.getByRole("radio", { name: "文章" })).toBeDisabled();
   move("終了番号", 1);
-  expect(screen.getByRole("slider", { name: "終了番号" })).toHaveValue("2");
+  move("開始番号", 2);
+  expect(screen.getByRole("slider", { name: "開始番号" })).toHaveValue("1");
+  expect(screen.getByRole("radio", { name: "文章" })).toBeDisabled();
+  move("終了番号", 0);
+  expect(screen.getByRole("slider", { name: "終了番号" })).toHaveValue("1");
 });

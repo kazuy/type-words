@@ -15,15 +15,13 @@ export default function PromptModeSetting({
 }: PromptModeSettingProps) {
   return (
     <fieldset>
-      <legend>出題方向</legend>
+      <legend>表示する言語</legend>
       <SettingOptions
         name="prompt-mode"
         options={promptModes}
         value={value}
         onChange={onChange}
-        formatLabel={(option) =>
-          option === "en-to-en" ? "英語 → 英語" : "日本語 → 英語"
-        }
+        formatLabel={(option) => (option === "en-to-en" ? "英語" : "日本語")}
       />
     </fieldset>
   );

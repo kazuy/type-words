@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { expect, test, vi } from "vitest";
 import ContentTypeSetting from "../../src/components/ContentTypeSetting";
+import PracticeRangeSetting from "../../src/components/PracticeRangeSetting";
 import PromptModeSetting from "../../src/components/PromptModeSetting";
 import QuestionCountSetting from "../../src/components/QuestionCountSetting";
 
@@ -16,7 +18,7 @@ test.each([
     nextValue: 20,
   },
   {
-    name: "練習内容",
+    name: "出題内容",
     renderSetting: (onChange: (value: string) => void) => (
       <ContentTypeSetting value="word" onChange={onChange} />
     ),
@@ -26,13 +28,13 @@ test.each([
     nextValue: "sentence",
   },
   {
-    name: "出題方向",
+    name: "表示する言語",
     renderSetting: (onChange: (value: string) => void) => (
       <PromptModeSetting value="en-to-en" onChange={onChange} />
     ),
-    labels: ["英語 → 英語", "日本語 → 英語"],
-    selected: "英語 → 英語",
-    next: "日本語 → 英語",
+    labels: ["英語", "日本語"],
+    selected: "英語",
+    next: "日本語",
     nextValue: "ja-to-en",
   },
 ])(
@@ -51,3 +53,34 @@ test.each([
     expect(onChange).toHaveBeenCalledExactlyOnceWith(nextValue);
   },
 );
+
+function RangePreview() {
+  const bounds = { start: 1, end: 503 };
+  const [value, setValue] = useState(bounds);
+  return (
+    <PracticeRangeSetting
+      bounds={bounds}
+      value={value}
+      onChange={setValue}
+      disabled={false}
+    />
+  );
+}
+
+test("displays actual numbers for slider selections including the final partial group", () => {
+  render(<RangePreview />);
+  const start = screen.getByRole("slider", { name: "開始番号" });
+  const end = screen.getByRole("slider", { name: "終了番号" });
+  expect(screen.getByText("1〜503")).toBeVisible();
+  expect(start).toHaveAttribute("aria-valuetext", "1");
+  expect(end).toHaveAttribute("aria-valuetext", "503");
+  fireEvent.change(start, { target: { value: "50" } });
+  expect(screen.getByText("501〜503")).toBeVisible();
+  fireEvent.change(end, { target: { value: "49" } });
+  expect(screen.getByText("501〜503")).toBeVisible();
+  fireEvent.change(start, { target: { value: "1" } });
+  fireEvent.change(end, { target: { value: "1" } });
+  expect(screen.getByText("11〜20")).toBeVisible();
+  expect(start).toHaveAttribute("aria-valuetext", "11");
+  expect(end).toHaveAttribute("aria-valuetext", "20");
+});
