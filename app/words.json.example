@@ -5,6 +5,12 @@
       "en": "example",
       "ja": "例"
     },
+    "words": [
+      {
+        "en": "example",
+        "ja": "例"
+      }
+    ],
     "sentences": [
       {
         "en": "This is an example.",
