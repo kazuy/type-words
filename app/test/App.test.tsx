@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import App from "../src/App";
 
 vi.mock("../src/domain/practice/words", () => ({
-  words: Array.from({ length: 20 }, (_, index) => ({
+  words: Array.from({ length: 21 }, (_, index) => ({
     number: index + 1,
     word: { en: `word${index}`, ja: `単語${index}` },
     words: [{ en: `word${index}`, ja: `単語${index}` }],
@@ -52,23 +52,23 @@ test("starts a game, returns to settings after the final answer, and resets a ne
   expect(screen.getByRole("textbox")).toHaveValue("");
 });
 
-test("practices only the selected number and preserves its range after finishing", () => {
+test("practices only the final partial group and preserves its range after finishing", () => {
   openSettings();
   fireEvent.change(screen.getByRole("slider", { name: "開始番号" }), {
-    target: { value: "20" },
+    target: { value: "2" },
   });
   fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
   expect(screen.getByText("1 / 1 問")).toBeVisible();
   expect(document.querySelector(".practice-prompt")).toHaveTextContent(
-    "word19",
+    "word20",
   );
   const input = screen.getByRole("textbox");
-  fireEvent.change(input, { target: { value: "word19" } });
+  fireEvent.change(input, { target: { value: "word20" } });
   const form = input.closest("form");
   if (!form) throw new Error("Missing typing form");
   fireEvent.submit(form);
-  expect(screen.getByRole("slider", { name: "開始番号" })).toHaveValue("20");
-  expect(screen.getByRole("slider", { name: "終了番号" })).toHaveValue("20");
+  expect(screen.getByRole("slider", { name: "開始番号" })).toHaveValue("2");
+  expect(screen.getByRole("slider", { name: "終了番号" })).toHaveValue("2");
   fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
   expect(screen.getByText("1 / 1 問")).toBeVisible();
 });

@@ -1,6 +1,10 @@
 import type { CSSProperties } from "react";
 
-import type { PracticeRange } from "../domain/practice/range";
+import {
+  getPracticeRangeOptions,
+  type PracticeRange,
+  updatePracticeRange,
+} from "../domain/practice/range";
 
 type Props = {
   bounds: PracticeRange;
@@ -15,9 +19,11 @@ export default function PracticeRangeSetting({
   onChange,
   disabled,
 }: Props) {
-  const span = bounds.end - bounds.start;
-  const position = (number: number) =>
-    span === 0 ? 0 : ((number - bounds.start) / span) * 100;
+  const options = getPracticeRangeOptions(bounds);
+  const startIndex = options.start.indexOf(value.start);
+  const endIndex = options.end.indexOf(value.end);
+  const position = (index: number, count: number) =>
+    count === 1 ? 0 : (index / (count - 1)) * 100;
 
   return (
     <fieldset className="practice-range">
@@ -32,8 +38,8 @@ export default function PracticeRangeSetting({
         className="range-controls"
         style={
           {
-            "--range-start": `${position(value.start)}%`,
-            "--range-end": `${position(value.end)}%`,
+            "--range-start": `${position(startIndex, options.start.length)}%`,
+            "--range-end": `${position(endIndex, options.end.length)}%`,
           } as CSSProperties
         }
       >
@@ -42,35 +48,47 @@ export default function PracticeRangeSetting({
         <input
           type="range"
           className={
-            value.start === bounds.end ? "range-start at-end" : "range-start"
+            startIndex === options.start.length - 1
+              ? "range-start at-end"
+              : "range-start"
           }
           aria-label="開始番号"
-          min={bounds.start}
-          max={bounds.end}
+          min={0}
+          max={options.start.length - 1}
           step={1}
-          value={value.start}
+          value={startIndex}
+          aria-valuetext={String(value.start)}
           disabled={disabled}
           onChange={(event) =>
-            onChange({
-              ...value,
-              start: Math.min(Number(event.target.value), value.end),
-            })
+            onChange(
+              updatePracticeRange(
+                value,
+                options,
+                "start",
+                options.start[Number(event.target.value)],
+              ),
+            )
           }
         />
 
         <input
           type="range"
           aria-label="終了番号"
-          min={bounds.start}
-          max={bounds.end}
+          min={0}
+          max={options.end.length - 1}
           step={1}
-          value={value.end}
+          value={endIndex}
+          aria-valuetext={String(value.end)}
           disabled={disabled}
           onChange={(event) =>
-            onChange({
-              ...value,
-              end: Math.max(Number(event.target.value), value.start),
-            })
+            onChange(
+              updatePracticeRange(
+                value,
+                options,
+                "end",
+                options.end[Number(event.target.value)],
+              ),
+            )
           }
         />
       </div>
