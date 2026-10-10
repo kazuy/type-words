@@ -1,5 +1,8 @@
 export function normalizePracticeText(text: string): string {
-  return text.replace(/['"‘’“”＇＂]/g, "");
+  return text
+    .replace(/[‘’＇]/g, "'")
+    .replace(/["“”＂]/g, "")
+    .replace(/(?<![a-zA-Z])'|'(?![a-zA-Z])/g, "");
 }
 
 export function isMatchingCharacter(input: string, target: string): boolean {

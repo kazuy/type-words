@@ -57,14 +57,14 @@ test.each([
   {
     contentType: "sentence",
     promptMode: "en-to-en",
-    prompts: ["This is an apple.", "Its red.", "A pear."],
-    targets: ["This is an apple.", "Its red.", "A pear."],
+    prompts: ["This is an apple.", "It's red.", "A pear."],
+    targets: ["This is an apple.", "It's red.", "A pear."],
   },
   {
     contentType: "sentence",
     promptMode: "ja-to-en",
     prompts: ["これはりんごです。", "赤いです。", "梨です。"],
-    targets: ["This is an apple.", "Its red.", "A pear."],
+    targets: ["This is an apple.", "It's red.", "A pear."],
   },
 ] as const)(
   "generates $contentType questions in $promptMode mode",
@@ -197,7 +197,7 @@ test.each([1, 2, 3, 10])(
 );
 
 test.each([
-  { promptMode: "en-to-en", prompt: "Whats this?" },
+  { promptMode: "en-to-en", prompt: "What's this?" },
   { promptMode: "ja-to-en", prompt: "これは何ですか？" },
 ] as const)(
   "includes sentence-only entries and removes quotes in $promptMode mode",
@@ -209,7 +209,7 @@ test.each([
         () => 0.999,
       ),
     ).toEqual([
-      { prompt, target: "Whats this?", translation: "これは何ですか？" },
+      { prompt, target: "What's this?", translation: "これは何ですか？" },
     ]);
   },
 );
