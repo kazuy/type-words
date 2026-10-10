@@ -42,7 +42,8 @@ export default function TypingCharacters({
                   typed === undefined &&
                   (character === "," ||
                     character === "." ||
-                    character === "?") && (
+                    character === "?" ||
+                    character === "!") && (
                     <span className="punctuation-hint">{character}</span>
                   )
                 )}
