@@ -51,3 +51,24 @@ test("starts a game, returns to settings after the final answer, and resets a ne
   expect(screen.getByText("1 / 10 問")).toBeVisible();
   expect(screen.getByRole("textbox")).toHaveValue("");
 });
+
+test("practices only the selected number and preserves its range after finishing", () => {
+  openSettings();
+  fireEvent.change(screen.getByRole("slider", { name: "開始番号" }), {
+    target: { value: "20" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
+  expect(screen.getByText("1 / 1 問")).toBeVisible();
+  expect(document.querySelector(".practice-prompt")).toHaveTextContent(
+    "word19",
+  );
+  const input = screen.getByRole("textbox");
+  fireEvent.change(input, { target: { value: "word19" } });
+  const form = input.closest("form");
+  if (!form) throw new Error("Missing typing form");
+  fireEvent.submit(form);
+  expect(screen.getByRole("slider", { name: "開始番号" })).toHaveValue("20");
+  expect(screen.getByRole("slider", { name: "終了番号" })).toHaveValue("20");
+  fireEvent.click(screen.getByRole("button", { name: "ゲームをはじめる" }));
+  expect(screen.getByText("1 / 1 問")).toBeVisible();
+});

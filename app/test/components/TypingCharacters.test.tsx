@@ -34,29 +34,52 @@ test("replaces hints with typed characters, including mistakes", () => {
   ).toHaveClass("current");
 });
 
-test("shows a question mark hint until it is typed and restores it after deletion", () => {
-  const { container, rerender } = render(
-    <TypingCharacters target="What's this?" input="What'sthis" cursor={10} />,
-  );
-  expect(container.querySelector(".punctuation-hint")).toHaveTextContent("?");
-  expect(
-    container.querySelector(".punctuation-hint")?.parentElement,
-  ).toHaveClass("current", "untyped");
+test.each(["?", "!"])(
+  "shows a %s hint until it is typed and restores it after deletion",
+  (punctuation) => {
+    const { container, rerender } = render(
+      <TypingCharacters
+        target={`What's this${punctuation}`}
+        input="What'sthis"
+        cursor={10}
+      />,
+    );
+    expect(container.querySelector(".punctuation-hint")).toHaveTextContent(
+      punctuation,
+    );
+    expect(
+      container.querySelector(".punctuation-hint")?.parentElement,
+    ).toHaveClass("current", "untyped");
 
-  rerender(
-    <TypingCharacters target="What's this?" input="What'sthis." cursor={11} />,
-  );
-  expect(container.querySelector(".punctuation-hint")).toBeNull();
-  expect(container.querySelector(".incorrect")).toHaveTextContent(".");
+    rerender(
+      <TypingCharacters
+        target={`What's this${punctuation}`}
+        input="What'sthis."
+        cursor={11}
+      />,
+    );
+    expect(container.querySelector(".punctuation-hint")).toBeNull();
+    expect(container.querySelector(".incorrect")).toHaveTextContent(".");
 
-  rerender(
-    <TypingCharacters target="What's this?" input="What'sthis?" cursor={11} />,
-  );
-  expect(container.querySelector(".punctuation-hint")).toBeNull();
-  expect(container.querySelector(".incorrect")).toBeNull();
+    rerender(
+      <TypingCharacters
+        target={`What's this${punctuation}`}
+        input={`What'sthis${punctuation}`}
+        cursor={11}
+      />,
+    );
+    expect(container.querySelector(".punctuation-hint")).toBeNull();
+    expect(container.querySelector(".incorrect")).toBeNull();
 
-  rerender(
-    <TypingCharacters target="What's this?" input="What'sthis" cursor={10} />,
-  );
-  expect(container.querySelector(".punctuation-hint")).toHaveTextContent("?");
-});
+    rerender(
+      <TypingCharacters
+        target={`What's this${punctuation}`}
+        input="What'sthis"
+        cursor={10}
+      />,
+    );
+    expect(container.querySelector(".punctuation-hint")).toHaveTextContent(
+      punctuation,
+    );
+  },
+);

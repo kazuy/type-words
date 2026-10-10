@@ -1,9 +1,11 @@
+import { getPracticeCandidates, type PracticeRange } from "./range";
 import { normalizePracticeText } from "./typing";
 import type { WordEntry } from "./words";
 
 type PracticeQuestionSettings = {
   questionCount: number;
-  contentType: "word" | "sentence";
+  contentType: "word" | "sentence" | null;
+  range: PracticeRange;
   promptMode: "en-to-en" | "ja-to-en";
 };
 
@@ -18,9 +20,10 @@ export function generatePracticeQuestions(
   settings: PracticeQuestionSettings,
   random: () => number,
 ): PracticeQuestion[] {
-  const candidates = wordEntries.flatMap((entry) =>
-    settings.contentType === "word" ? entry.words : entry.sentences,
-  );
+  if (!settings.contentType) return [];
+  const candidates = getPracticeCandidates(wordEntries, settings.range)[
+    settings.contentType
+  ];
 
   for (let index = candidates.length - 1; index > 0; index--) {
     const selectedIndex = Math.floor(random() * (index + 1));
