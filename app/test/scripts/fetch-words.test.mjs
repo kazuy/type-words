@@ -30,6 +30,7 @@ const words = [
   {
     number: 1,
     word: { en: "example", ja: "例" },
+    words: [{ en: "example", ja: "例" }],
     sentences: [{ en: "An example.", ja: "例です。" }],
   },
 ];
@@ -95,6 +96,41 @@ describe("R2 word data preparation", () => {
   });
 
   it.each([
+    {
+      name: "multiple words and a phrase",
+      entry: {
+        number: 2,
+        word: { en: "go in/come out", ja: "入る／出る" },
+        words: [
+          { en: "go in", ja: "入る" },
+          { en: "come out", ja: "出る" },
+        ],
+        sentences: [],
+      },
+    },
+    {
+      name: "a sentence-only item without a heading",
+      entry: {
+        number: 3,
+        word: null,
+        words: [],
+        sentences: [{ en: "What's this?", ja: "これは何ですか？" }],
+      },
+    },
+  ])("accepts $name", async ({ entry }) => {
+    const data = [...words, entry];
+    send.mockResolvedValue({
+      Body: { transformToString: async () => JSON.stringify(data) },
+    });
+    await runScript();
+
+    expect(process.exitCode).toBeUndefined();
+    expect(
+      JSON.parse(await readFile(join(directory, "words.json"), "utf8")),
+    ).toEqual(data);
+  });
+
+  it.each([
     "R2_ACCOUNT_ID",
     "R2_BUCKET_NAME",
     "R2_ACCESS_KEY_ID",
@@ -134,6 +170,14 @@ describe("R2 word data preparation", () => {
     "{}",
     JSON.stringify([{ ...words[0], number: 0 }]),
     JSON.stringify([{ ...words[0], word: { en: "", ja: "例" } }]),
+    JSON.stringify([{ ...words[0], word: undefined }]),
+    JSON.stringify([{ ...words[0], words: undefined }]),
+    JSON.stringify([{ ...words[0], words: null }]),
+    JSON.stringify([{ ...words[0], words: {} }]),
+    JSON.stringify([{ ...words[0], words: [null] }]),
+    JSON.stringify([{ ...words[0], words: [{ en: "example" }] }]),
+    JSON.stringify([{ ...words[0], words: [{ en: "", ja: "例" }] }]),
+    JSON.stringify([{ ...words[0], words: [{ en: "example", ja: " " }] }]),
     JSON.stringify([{ ...words[0], sentences: [{ en: "example" }] }]),
   ])("rejects invalid data (%s)", async (contents) => {
     send.mockResolvedValue({

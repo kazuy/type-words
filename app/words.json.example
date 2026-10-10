@@ -17,5 +17,57 @@
         "ja": "これは例です。"
       }
     ]
+  },
+  {
+    "number": 2,
+    "word": {
+      "en": "shoe/shoes",
+      "ja": "靴"
+    },
+    "words": [
+      {
+        "en": "shoe",
+        "ja": "靴"
+      },
+      {
+        "en": "shoes",
+        "ja": "靴（複数形）"
+      }
+    ],
+    "sentences": [
+      {
+        "en": "This is a shoe.",
+        "ja": "これは靴です。"
+      },
+      {
+        "en": "These are shoes.",
+        "ja": "これらは靴です。"
+      }
+    ]
+  },
+  {
+    "number": 3,
+    "word": {
+      "en": "take off",
+      "ja": "脱ぐ"
+    },
+    "words": [
+      {
+        "en": "take off",
+        "ja": "脱ぐ"
+      }
+    ],
+    "sentences": []
+  },
+  {
+    "number": 4,
+    "word": null,
+    "words": [],
+    "sentences": [
+      {
+        "en": "Is the cat sitting on the chair?",
+        "ja": "猫は椅子に座っていますか？"
+      }
+    ]
   }
 ]

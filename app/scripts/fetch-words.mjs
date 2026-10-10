@@ -77,7 +77,9 @@ async function prepareWords() {
           typeof entry === "object" &&
           Number.isSafeInteger(entry.number) &&
           entry.number > 0 &&
-          isTranslation(entry.word) &&
+          (entry.word === null || isTranslation(entry.word)) &&
+          Array.isArray(entry.words) &&
+          entry.words.every(isTranslation) &&
           Array.isArray(entry.sentences) &&
           entry.sentences.every(isTranslation),
       )

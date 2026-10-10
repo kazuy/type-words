@@ -8,6 +8,7 @@ vi.mock("../../src/domain/practice/words", () => ({
   words: Array.from({ length: 20 }, (_, index) => ({
     number: index + 1,
     word: { en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` },
+    words: [{ en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` }],
     sentences: [
       {
         en: index === 0 ? "This is an apple." : `Sentence ${index}.`,
@@ -45,12 +46,13 @@ test.each(["word", "sentence"] as const)(
       />,
     );
     const content =
-      contentType === "word" ? words[0].word : words[0].sentences[0];
+      contentType === "word" ? words[0].words[0] : words[0].sentences[0];
     expect(screen.getByText(content.en)).toBeVisible();
     expect(screen.getByText(content.ja)).toBeVisible();
     type(content.en);
     submit();
-    const next = contentType === "word" ? words[1].word : words[1].sentences[0];
+    const next =
+      contentType === "word" ? words[1].words[0] : words[1].sentences[0];
     expect(screen.getByText(next.ja)).toBeVisible();
     expect(screen.queryByText(content.ja)).toBeNull();
   },
@@ -66,7 +68,7 @@ test.each(["word", "sentence"] as const)(
       />,
     );
     const content =
-      contentType === "word" ? words[0].word : words[0].sentences[0];
+      contentType === "word" ? words[0].words[0] : words[0].sentences[0];
     expect(screen.getAllByText(content.ja)).toHaveLength(1);
     expect(screen.queryByText(content.en)).toBeNull();
   },
@@ -335,7 +337,7 @@ test.each(["word", "sentence"] as const)(
     fireEvent.click(hint);
     expect(container.querySelectorAll(".character-hint")).toHaveLength(1);
     const content =
-      contentType === "word" ? words[0].word : words[0].sentences[0];
+      contentType === "word" ? words[0].words[0] : words[0].sentences[0];
     type(content.en);
     expect(hint).toBeDisabled();
     submit();
@@ -348,3 +350,92 @@ test("does not offer hints in English-to-English mode", () => {
   render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
   expect(screen.queryByRole("button", { name: "ヒントを表示" })).toBeNull();
 });
+
+test.each(["en-to-en", "ja-to-en"] as const)(
+  "practices multiple words and a phrase independently in %s mode",
+  (promptMode) => {
+    const originals = words.map((entry) => ({
+      word: entry.word,
+      words: entry.words,
+    }));
+    const candidates = [
+      { en: "shoe", ja: "靴" },
+      { en: "shoes", ja: "靴（複数形）" },
+      { en: "take off", ja: "脱ぐ" },
+    ];
+    for (const entry of words) entry.words = [];
+    words[0].word = { en: "shoe/shoes", ja: "靴の見出し" };
+    words[0].words = candidates;
+    try {
+      const onFinish = vi.fn();
+      render(
+        <TypingPracticePage
+          settings={{ ...settings, promptMode }}
+          onFinish={onFinish}
+        />,
+      );
+      for (const [index, candidate] of candidates.entries()) {
+        expect(screen.getByText(`${index + 1} / 3 問`)).toBeVisible();
+        expect(document.querySelector(".practice-prompt")).toHaveTextContent(
+          promptMode === "en-to-en" ? candidate.en : candidate.ja,
+        );
+        expect(screen.queryByText("shoe/shoes")).toBeNull();
+        expect(screen.queryByText("靴の見出し")).toBeNull();
+        expect(onFinish).not.toHaveBeenCalled();
+        type(candidate.en);
+        expect(
+          screen.getByRole("button", {
+            name:
+              index === candidates.length - 1 ? "ゲームを終了" : "次の問題へ",
+          }),
+        ).toBeEnabled();
+        submit();
+      }
+      expect(onFinish).toHaveBeenCalledOnce();
+    } finally {
+      words.forEach((entry, index) => {
+        entry.word = originals[index].word;
+        entry.words = originals[index].words;
+      });
+    }
+  },
+);
+
+test.each(["word", "sentence"] as const)(
+  "handles sentence-only entries in %s practice",
+  (contentType) => {
+    const originals = words.map((entry) => ({
+      word: entry.word,
+      words: entry.words,
+    }));
+    for (const entry of words) {
+      entry.word = null;
+      entry.words = [];
+    }
+    try {
+      const onFinish = vi.fn();
+      render(
+        <TypingPracticePage
+          settings={{ ...settings, contentType }}
+          onFinish={onFinish}
+        />,
+      );
+      if (contentType === "word") {
+        expect(screen.getByText("出題できる問題がありません。")).toBeVisible();
+        expect(screen.queryByRole("textbox")).toBeNull();
+        fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+        expect(onFinish).toHaveBeenCalledOnce();
+      } else {
+        expect(screen.getByText(words[0].sentences[0].en)).toBeVisible();
+        type(words[0].sentences[0].en);
+        submit();
+        expect(screen.getByText(words[1].sentences[0].en)).toBeVisible();
+      }
+    } finally {
+      words.forEach((entry, index) => {
+        entry.word = originals[index].word;
+        entry.words = originals[index].words;
+      });
+    }
+  },
+);
