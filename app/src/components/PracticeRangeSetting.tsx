@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-export type PracticeRange = { start: number; end: number };
+import type { PracticeRange } from "../domain/practice/range";
 
 type Props = {
   bounds: PracticeRange;

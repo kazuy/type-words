@@ -2,85 +2,66 @@ import { useEffect, useRef, useState } from "react";
 import ContentTypeSetting, {
   type ContentType,
 } from "../components/ContentTypeSetting";
-import PracticeRangeSetting, {
-  type PracticeRange,
-} from "../components/PracticeRangeSetting";
+import PracticeRangeSetting from "../components/PracticeRangeSetting";
 import PromptModeSetting, {
   type PromptMode,
 } from "../components/PromptModeSetting";
 import QuestionCountSetting, {
   type QuestionCount,
 } from "../components/QuestionCountSetting";
+import {
+  getPracticeCandidates,
+  type PracticeRange,
+} from "../domain/practice/range";
 import { words } from "../domain/practice/words";
 
 export type PracticeSettings = {
   questionCount: QuestionCount;
-  contentType: ContentType;
+  contentType: ContentType | null;
+  range: PracticeRange;
   promptMode: PromptMode;
 };
 
 type Props = {
   settings: PracticeSettings;
+  bounds: PracticeRange;
   onChange: (settings: PracticeSettings) => void;
   onStart: () => void;
 };
 
 export default function PracticeSettingsPage({
   settings,
+  bounds,
   onChange,
   onStart,
 }: Props) {
-  const [bounds] = useState(() =>
-    words.reduce(
-      (range, entry) => ({
-        start: Math.min(range.start, entry.number),
-        end: Math.max(range.end, entry.number),
-      }),
-      { start: words[0]?.number ?? 0, end: words[0]?.number ?? 0 },
-    ),
-  );
-  const [range, setRange] = useState(bounds);
   const [notice, setNotice] = useState("");
-  const candidates = words.filter(
-    (entry) => entry.number >= range.start && entry.number <= range.end,
-  );
+  const candidates = getPracticeCandidates(words, settings.range);
   const counts = {
-    word: candidates.reduce((count, entry) => count + entry.words.length, 0),
-    sentence: candidates.reduce(
-      (count, entry) => count + entry.sentences.length,
-      0,
-    ),
+    word: candidates.word.length,
+    sentence: candidates.sentence.length,
   };
   const selectedType =
-    counts[settings.contentType] > 0 ? settings.contentType : null;
-  const isFullRange = range.start === bounds.start && range.end === bounds.end;
+    settings.contentType && counts[settings.contentType] > 0
+      ? settings.contentType
+      : null;
 
   function changeRange(next: PracticeRange) {
-    const entries = words.filter(
-      (entry) => entry.number >= next.start && entry.number <= next.end,
-    );
-    const available = {
-      word: entries.some((entry) => entry.words.length > 0),
-      sentence: entries.some((entry) => entry.sentences.length > 0),
-    };
-    setRange(next);
-    if (selectedType && available[selectedType]) {
+    const nextCandidates = getPracticeCandidates(words, next);
+    const contentType =
+      selectedType && nextCandidates[selectedType].length > 0
+        ? selectedType
+        : nextCandidates.word.length > 0
+          ? "word"
+          : nextCandidates.sentence.length > 0
+            ? "sentence"
+            : null;
+    onChange({ ...settings, range: next, contentType });
+    if (!contentType || contentType === selectedType) {
       setNotice("");
       return;
     }
 
-    const contentType = available.word
-      ? "word"
-      : available.sentence
-        ? "sentence"
-        : null;
-    if (!contentType) {
-      setNotice("");
-      return;
-    }
-
-    if (contentType !== settings.contentType)
-      onChange({ ...settings, contentType });
     setNotice(
       selectedType
         ? `この範囲には${selectedType === "word" ? "単語" : "文章"}がないため、${contentType === "word" ? "単語" : "文章"}に切り替えました。`
@@ -100,7 +81,7 @@ export default function PracticeSettingsPage({
       </h1>
       <PracticeRangeSetting
         bounds={bounds}
-        value={range}
+        value={settings.range}
         onChange={changeRange}
         disabled={words.length === 0 || bounds.start === bounds.end}
       />
@@ -127,8 +108,10 @@ export default function PracticeSettingsPage({
       />
       <button
         type="button"
-        disabled={!selectedType || !isFullRange}
-        onClick={onStart}
+        disabled={!selectedType}
+        onClick={() => {
+          if (selectedType) onStart();
+        }}
       >
         ゲームをはじめる
       </button>

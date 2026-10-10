@@ -71,7 +71,12 @@ test.each([
   ({ contentType, promptMode, prompts, targets }) => {
     const questions = generatePracticeQuestions(
       entries,
-      { questionCount: 10, contentType, promptMode },
+      {
+        range: { start: 1, end: 3 },
+        questionCount: 10,
+        contentType,
+        promptMode,
+      },
       () => 0.999,
     );
     expect(questions.map((question) => question.prompt)).toEqual(prompts);
@@ -90,7 +95,12 @@ test.each([1, 2, 3, 10])(
     const original = structuredClone(entries);
     const questions = generatePracticeQuestions(
       entries,
-      { questionCount, contentType: "sentence", promptMode: "en-to-en" },
+      {
+        range: { start: 1, end: 3 },
+        questionCount,
+        contentType: "sentence",
+        promptMode: "en-to-en",
+      },
       () => 0,
     );
     expect(questions).toHaveLength(Math.min(questionCount, 3));
@@ -103,6 +113,7 @@ test.each([1, 2, 3, 10])(
 
 test("uses the random source to select different candidate orders", () => {
   const settings = {
+    range: { start: 1, end: 3 },
     questionCount: 2,
     contentType: "word",
     promptMode: "en-to-en",
@@ -125,7 +136,12 @@ test.each([{ data: [] }, { data: [{ ...entries[0], sentences: [] }] }])(
     expect(
       generatePracticeQuestions(
         data,
-        { questionCount: 10, contentType: "sentence", promptMode: "en-to-en" },
+        {
+          range: { start: 1, end: 3 },
+          questionCount: 10,
+          contentType: "sentence",
+          promptMode: "en-to-en",
+        },
         () => 0,
       ),
     ).toEqual([]);
@@ -165,7 +181,12 @@ test.each([
     const original = structuredClone(mixedEntries);
     const questions = generatePracticeQuestions(
       mixedEntries,
-      { questionCount: 10, contentType: "word", promptMode },
+      {
+        range: { start: 1, end: 3 },
+        questionCount: 10,
+        contentType: "word",
+        promptMode,
+      },
       () => 0.999,
     );
     expect(questions.map((question) => question.prompt)).toEqual(prompts);
@@ -189,7 +210,12 @@ test.each([1, 2, 3, 10])(
     expect(
       generatePracticeQuestions(
         mixedEntries,
-        { questionCount, contentType: "word", promptMode: "en-to-en" },
+        {
+          range: { start: 1, end: 3 },
+          questionCount,
+          contentType: "word",
+          promptMode: "en-to-en",
+        },
         () => 0,
       ),
     ).toHaveLength(Math.min(questionCount, 3));
@@ -205,7 +231,12 @@ test.each([
     expect(
       generatePracticeQuestions(
         mixedEntries,
-        { questionCount: 10, contentType: "sentence", promptMode },
+        {
+          range: { start: 1, end: 3 },
+          questionCount: 10,
+          contentType: "sentence",
+          promptMode,
+        },
         () => 0.999,
       ),
     ).toEqual([
@@ -224,9 +255,48 @@ test.each([
     expect(
       generatePracticeQuestions(
         data,
-        { questionCount: 10, contentType: "word", promptMode: "en-to-en" },
+        {
+          range: { start: 1, end: 3 },
+          questionCount: 10,
+          contentType: "word",
+          promptMode: "en-to-en",
+        },
         () => 0,
       ),
     ).toEqual([]);
   },
 );
+
+test.each(["word", "sentence"] as const)(
+  "restricts %s questions to inclusive number bounds",
+  (contentType) => {
+    const questions = generatePracticeQuestions(
+      entries,
+      {
+        questionCount: 10,
+        contentType,
+        promptMode: "en-to-en",
+        range: { start: 2, end: 2 },
+      },
+      () => 0,
+    );
+    expect(questions.map((question) => question.target)).toEqual(
+      contentType === "word" ? ["pear"] : ["A pear."],
+    );
+  },
+);
+
+test("returns no questions when the content type is unselected", () => {
+  expect(
+    generatePracticeQuestions(
+      entries,
+      {
+        questionCount: 10,
+        contentType: null,
+        promptMode: "en-to-en",
+        range: { start: 1, end: 2 },
+      },
+      () => 0,
+    ),
+  ).toEqual([]);
+});

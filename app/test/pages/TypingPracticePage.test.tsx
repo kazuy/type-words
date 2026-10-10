@@ -23,6 +23,7 @@ beforeEach(() => {
 });
 
 const settings: PracticeSettings = {
+  range: { start: 1, end: 20 },
   questionCount: 10,
   contentType: "word",
   promptMode: "en-to-en",

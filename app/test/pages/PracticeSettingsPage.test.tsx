@@ -6,6 +6,7 @@ import PracticeSettingsPage, {
 } from "../../src/pages/PracticeSettingsPage";
 
 const settings: PracticeSettings = {
+  range: { start: 1, end: 5 },
   questionCount: 15,
   contentType: "sentence",
   promptMode: "ja-to-en",
@@ -14,6 +15,7 @@ const settings: PracticeSettings = {
 test("displays supplied settings and an enabled game button", () => {
   render(
     <PracticeSettingsPage
+      bounds={{ start: 1, end: 5 }}
       settings={settings}
       onChange={vi.fn()}
       onStart={vi.fn()}
@@ -39,6 +41,7 @@ test.each([
   const onChange = vi.fn();
   render(
     <PracticeSettingsPage
+      bounds={{ start: 1, end: 5 }}
       settings={settings}
       onChange={onChange}
       onStart={vi.fn()}
@@ -52,6 +55,7 @@ test("starts a game when the start button is clicked", () => {
   const onStart = vi.fn();
   render(
     <PracticeSettingsPage
+      bounds={{ start: 1, end: 5 }}
       settings={settings}
       onChange={vi.fn()}
       onStart={onStart}
@@ -81,6 +85,7 @@ function Preview() {
   });
   return (
     <PracticeSettingsPage
+      bounds={{ start: 1, end: 5 }}
       settings={value}
       onChange={setValue}
       onStart={vi.fn()}
@@ -103,7 +108,7 @@ test("switches to sentences when the range has no words and explains the change"
   expect(screen.getByText("1問")).toBeVisible();
   expect(
     screen.getByRole("button", { name: "ゲームをはじめる" }),
-  ).toBeDisabled();
+  ).toBeEnabled();
 });
 
 test("clears selection for an empty range and restores word selection when the range expands", () => {
