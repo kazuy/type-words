@@ -1,5 +1,12 @@
 // @vitest-environment node
-import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,13 +33,7 @@ vi.mock("@aws-sdk/client-s3", () => ({
   },
 }));
 
-const words = [
-  {
-    number: 1,
-    word: { en: "example", ja: "例" },
-    sentences: [{ en: "An example.", ja: "例です。" }],
-  },
-];
+const fileContents = Buffer.from('{"content":"そのままコピー"}\n');
 let directory;
 let previousExitCode;
 
@@ -55,7 +56,7 @@ describe("R2 word data preparation", () => {
     vi.stubEnv("R2_ACCESS_KEY_ID", "test-access-key");
     vi.stubEnv("R2_SECRET_ACCESS_KEY", "test-secret");
     send.mockResolvedValue({
-      Body: { transformToString: async () => JSON.stringify(words) },
+      Body: { transformToByteArray: async () => fileContents },
     });
   });
 
@@ -71,9 +72,7 @@ describe("R2 word data preparation", () => {
     await writeFile(join(directory, "words.json"), "stale");
     await runScript();
 
-    expect(
-      JSON.parse(await readFile(join(directory, "words.json"), "utf8")),
-    ).toEqual(words);
+    expect(await readFile(join(directory, "words.json"))).toEqual(fileContents);
     expect(command).toHaveBeenCalledWith({
       Bucket: "test-private-data",
       Key: "words.json",
@@ -120,7 +119,7 @@ describe("R2 word data preparation", () => {
 
       expect(process.exitCode).toBe(1);
       expect(console.error).toHaveBeenCalledExactlyOnceWith(
-        "Word data preparation failed. Check R2 configuration and data.",
+        "Word data preparation failed. Check R2 configuration and file transfer.",
       );
       await expect(access(join(directory, "words.json"))).rejects.toThrow();
       expect(destroy).toHaveBeenCalledOnce();
@@ -128,21 +127,39 @@ describe("R2 word data preparation", () => {
   );
 
   it.each([
-    "not json",
-    "[]",
-    "null",
-    "{}",
-    JSON.stringify([{ ...words[0], number: 0 }]),
-    JSON.stringify([{ ...words[0], word: { en: "", ja: "例" } }]),
-    JSON.stringify([{ ...words[0], sentences: [{ en: "example" }] }]),
-  ])("rejects invalid data (%s)", async (contents) => {
-    send.mockResolvedValue({
-      Body: { transformToString: async () => contents },
+    { name: "non-JSON text", contents: Buffer.from("not json\n") },
+    { name: "an empty JSON array", contents: Buffer.from("[]") },
+    { name: "arbitrary JSON", contents: Buffer.from('{"unrelated":true}') },
+    { name: "an empty file", contents: Buffer.alloc(0) },
+    { name: "binary bytes", contents: Buffer.from([0, 128, 255, 10]) },
+  ])(
+    "copies $name without parsing or changing the contents",
+    async ({ contents }) => {
+      send.mockResolvedValue({
+        Body: { transformToByteArray: async () => contents },
+      });
+      await runScript();
+
+      expect(process.exitCode).toBeUndefined();
+      expect(await readFile(join(directory, "words.json"))).toEqual(contents);
+    },
+  );
+
+  it("fails and cleans up when the destination cannot be replaced", async () => {
+    send.mockImplementation(async () => {
+      await mkdir(join(directory, "words.json"));
+      return { Body: { transformToByteArray: async () => fileContents } };
     });
     await runScript();
 
     expect(process.exitCode).toBe(1);
-    await expect(access(join(directory, "words.json"))).rejects.toThrow();
+    expect(console.error).toHaveBeenCalledExactlyOnceWith(
+      "Word data preparation failed. Check R2 configuration and file transfer.",
+    );
+    expect(destroy).toHaveBeenCalledOnce();
+    await expect(
+      access(join(directory, "words.json.download")),
+    ).rejects.toThrow();
   });
 
   it("fails when the object has no body", async () => {
@@ -160,7 +177,7 @@ describe("R2 word data preparation", () => {
         phase === "request"
           ? pending
           : Promise.resolve({
-              Body: { transformToString: () => pending },
+              Body: { transformToByteArray: () => pending },
             }),
       );
       const execution = runScript();

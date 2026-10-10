@@ -7,11 +7,21 @@ import {
   normalizePracticeText,
 } from "../../src/domain/practice/typing";
 
-test("removes straight, curly, and full-width quotes but preserves sentence punctuation", () => {
-  expect(normalizePracticeText(`“It's” 'an' ＂apple＂, isn’t it?`)).toBe(
-    "Its an apple, isnt it?",
-  );
-});
+test.each([
+  {
+    text: `“It's” 'an' ＂apple＂, isn’t it?`,
+    expected: "It's an apple, isn't it?",
+  },
+  { text: `"They're stairs."`, expected: "They're stairs." },
+  { text: "‘They’re stairs.’", expected: "They're stairs." },
+  { text: "＇They＇re stairs.＇", expected: "They're stairs." },
+  { text: "Mickey's hat.", expected: "Mickey's hat." },
+])(
+  "removes quotation marks and preserves word apostrophes: $text",
+  ({ text, expected }) => {
+    expect(normalizePracticeText(text)).toBe(expected);
+  },
+);
 test("matches case-insensitively without accepting different characters", () => {
   expect(isMatchingCharacter("t", "T")).toBe(true);
   expect(isMatchingCharacter("x", "T")).toBe(false);
@@ -35,6 +45,18 @@ test.each([
     complete: false,
   },
   { input: "apples", target: "apple", mismatchPositions: [6], complete: false },
+  {
+    input: "They'restairs.",
+    target: "They're stairs.",
+    mismatchPositions: [],
+    complete: true,
+  },
+  {
+    input: "Theyrestairs.",
+    target: "They're stairs.",
+    mismatchPositions: [5, 6, 7, 8, 9, 10, 11, 12, 13],
+    complete: false,
+  },
   {
     input: "thisisanapple.",
     target: "This is an apple.",

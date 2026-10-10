@@ -19,7 +19,7 @@ export function generatePracticeQuestions(
   random: () => number,
 ): PracticeQuestion[] {
   const candidates = wordEntries.flatMap((entry) =>
-    settings.contentType === "word" ? [entry.word] : entry.sentences,
+    settings.contentType === "word" ? entry.words : entry.sentences,
   );
 
   for (let index = candidates.length - 1; index > 0; index--) {
