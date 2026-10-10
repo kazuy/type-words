@@ -5,17 +5,6 @@ import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 const destination = resolve("words.json");
 const temporary = resolve("words.json.download");
 
-function isTranslation(value) {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    typeof value.en === "string" &&
-    value.en.trim().length > 0 &&
-    typeof value.ja === "string" &&
-    value.ja.trim().length > 0
-  );
-}
-
 async function prepareWords() {
   // Remove stale data so a failed download cannot leave usable build input.
   await rm(destination, { force: true });
@@ -56,7 +45,7 @@ async function prepareWords() {
         { abortSignal: controller.signal },
       );
       if (!response.Body) throw new Error("Missing body");
-      return response.Body.transformToString();
+      return response.Body.transformToByteArray();
     };
     const contents = await Promise.race([
       download(),
@@ -67,26 +56,6 @@ async function prepareWords() {
         }, 30_000);
       }),
     ]);
-    const data = JSON.parse(contents);
-    if (
-      !Array.isArray(data) ||
-      data.length === 0 ||
-      !data.every(
-        (entry) =>
-          entry !== null &&
-          typeof entry === "object" &&
-          Number.isSafeInteger(entry.number) &&
-          entry.number > 0 &&
-          (entry.word === null || isTranslation(entry.word)) &&
-          Array.isArray(entry.words) &&
-          entry.words.every(isTranslation) &&
-          Array.isArray(entry.sentences) &&
-          entry.sentences.every(isTranslation),
-      )
-    ) {
-      throw new Error("Invalid word data");
-    }
-
     await writeFile(temporary, contents, { mode: 0o600 });
     await rename(temporary, destination);
   } finally {
@@ -102,7 +71,7 @@ try {
 } catch {
   // SDK errors can contain private endpoint and request details.
   console.error(
-    "Word data preparation failed. Check R2 configuration and data.",
+    "Word data preparation failed. Check R2 configuration and file transfer.",
   );
   process.exitCode = 1;
 }
