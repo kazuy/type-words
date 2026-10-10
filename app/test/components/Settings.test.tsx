@@ -18,7 +18,7 @@ test.each([
     nextValue: 20,
   },
   {
-    name: "練習内容",
+    name: "出題内容",
     renderSetting: (onChange: (value: string) => void) => (
       <ContentTypeSetting value="word" onChange={onChange} />
     ),
@@ -28,13 +28,13 @@ test.each([
     nextValue: "sentence",
   },
   {
-    name: "出題方向",
+    name: "表示する言語",
     renderSetting: (onChange: (value: string) => void) => (
       <PromptModeSetting value="en-to-en" onChange={onChange} />
     ),
-    labels: ["英語 → 英語", "日本語 → 英語"],
-    selected: "英語 → 英語",
-    next: "日本語 → 英語",
+    labels: ["英語", "日本語"],
+    selected: "英語",
+    next: "日本語",
     nextValue: "ja-to-en",
   },
 ])(

@@ -17,7 +17,7 @@ export default function ContentTypeSetting({
 }: ContentTypeSettingProps) {
   return (
     <fieldset className="content-type-setting">
-      <legend>練習内容</legend>
+      <legend>出題内容</legend>
       <SettingOptions
         name="content-type"
         options={contentTypes}

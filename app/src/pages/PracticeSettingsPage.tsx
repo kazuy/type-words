@@ -85,10 +85,6 @@ export default function PracticeSettingsPage({
         onChange={changeRange}
         disabled={words.length === 0 || bounds.start === bounds.end}
       />
-      <QuestionCountSetting
-        value={settings.questionCount}
-        onChange={(questionCount) => onChange({ ...settings, questionCount })}
-      />
       <ContentTypeSetting
         value={selectedType}
         counts={counts}
@@ -102,6 +98,10 @@ export default function PracticeSettingsPage({
           ? "この範囲には練習できる単語・文章がありません。範囲を変更してください。"
           : notice}
       </p>
+      <QuestionCountSetting
+        value={settings.questionCount}
+        onChange={(questionCount) => onChange({ ...settings, questionCount })}
+      />
       <PromptModeSetting
         value={settings.promptMode}
         onChange={(promptMode) => onChange({ ...settings, promptMode })}

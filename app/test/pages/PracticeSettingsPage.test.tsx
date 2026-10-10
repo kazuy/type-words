@@ -22,10 +22,10 @@ test("displays supplied settings and an enabled game button", () => {
     />,
   );
   expect(screen.getByRole("heading", { name: "ゲームの設定" })).toHaveFocus();
-  for (const name of ["問題数", "練習内容", "出題方向"]) {
+  for (const name of ["問題数", "出題内容", "表示する言語"]) {
     expect(screen.getByRole("group", { name })).toBeVisible();
   }
-  for (const name of ["15問", "文章", "日本語 → 英語"]) {
+  for (const name of ["15問", "文章", "日本語"]) {
     expect(screen.getByRole("radio", { name })).toBeChecked();
   }
   expect(
@@ -36,7 +36,7 @@ test("displays supplied settings and an enabled game button", () => {
 test.each([
   { label: "20問", change: { questionCount: 20 } },
   { label: "単語", change: { contentType: "word" } },
-  { label: "英語 → 英語", change: { promptMode: "en-to-en" } },
+  { label: "英語", change: { promptMode: "en-to-en" } },
 ])("updates $label while preserving other settings", ({ label, change }) => {
   const onChange = vi.fn();
   render(

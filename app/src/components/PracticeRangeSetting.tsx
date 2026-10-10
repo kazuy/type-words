@@ -27,7 +27,7 @@ export default function PracticeRangeSetting({
 
   return (
     <fieldset className="practice-range">
-      <legend>練習範囲</legend>
+      <legend>出題範囲</legend>
       <p className="range-summary">
         番号{" "}
         <strong>
