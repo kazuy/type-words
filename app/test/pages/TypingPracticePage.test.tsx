@@ -127,7 +127,7 @@ test("displays target case and accepts spaces, commas, and periods", () => {
   expect(container.querySelector(".incorrect")).toBeNull();
   expect(screen.getByRole("button")).toBeEnabled();
   type("this is an apple");
-  expect(screen.getByRole("button")).toBeDisabled();
+  expect(screen.getByRole("button")).toBeEnabled();
 });
 test.each([10, 15, 20] as const)(
   "finishes only after %i questions and includes sentence punctuation",

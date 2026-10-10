@@ -82,3 +82,22 @@ test("maps words to continuous input positions without spaces", () => {
   expect(words[1].characters[0].index).toBe(4);
   expect(words[3].characters[0].index).toBe(8);
 });
+
+test.each([
+  { input: "Hello", target: "Hello.", complete: true },
+  { input: "Howareyou", target: "How are you?", complete: true },
+  { input: "Hello", target: "Hello!", complete: true },
+  { input: "Really?", target: "Really?!", complete: true },
+  { input: "Hello.", target: "Hello.", complete: true },
+  { input: "Hell", target: "Hello.", complete: false },
+  { input: "Hxllo", target: "Hello.", complete: false },
+  { input: "Hello?", target: "Hello.", complete: false },
+  { input: "Hello", target: "Hello,", complete: false },
+  { input: "Hello", target: "Hello. Goodbye.", complete: false },
+  { input: "", target: "Hello.", complete: false },
+])(
+  "allows only untyped trailing sentence punctuation: $input / $target",
+  ({ input, target, complete }) => {
+    expect(checkTypingAnswer(input, target).complete).toBe(complete);
+  },
+);
