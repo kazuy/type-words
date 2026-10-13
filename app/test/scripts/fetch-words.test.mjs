@@ -26,6 +26,12 @@ vi.mock("@aws-sdk/client-s3", () => ({
     send = send;
     destroy = destroy;
   },
+  ListObjectsV2Command: class {
+    constructor(options) {
+      this.options = options;
+      this.kind = "list";
+    }
+  },
   GetObjectCommand: class {
     constructor(options) {
       command(options);
@@ -55,9 +61,12 @@ describe("R2 word data preparation", () => {
     vi.stubEnv("R2_BUCKET_NAME", "test-private-data");
     vi.stubEnv("R2_ACCESS_KEY_ID", "test-access-key");
     vi.stubEnv("R2_SECRET_ACCESS_KEY", "test-secret");
-    send.mockResolvedValue({
-      Body: { transformToByteArray: async () => fileContents },
-    });
+    await mkdir(join(directory, "materials"));
+    send.mockImplementation(async (request) =>
+      request.kind === "list"
+        ? { Contents: [{ Key: "words.json" }] }
+        : { Body: { transformToByteArray: async () => fileContents } },
+    );
   });
 
   afterEach(async () => {
@@ -69,10 +78,12 @@ describe("R2 word data preparation", () => {
   });
 
   it("downloads the required object and replaces stale data", async () => {
-    await writeFile(join(directory, "words.json"), "stale");
+    await writeFile(join(directory, "materials", "words.json"), "stale");
     await runScript();
 
-    expect(await readFile(join(directory, "words.json"))).toEqual(fileContents);
+    expect(await readFile(join(directory, "materials", "words.json"))).toEqual(
+      fileContents,
+    );
     expect(command).toHaveBeenCalledWith({
       Bucket: "test-private-data",
       Key: "words.json",
@@ -89,7 +100,7 @@ describe("R2 word data preparation", () => {
     expect(process.exitCode).toBeUndefined();
     expect(destroy).toHaveBeenCalledOnce();
     await expect(
-      access(join(directory, "words.json.download")),
+      access(join(directory, "materials", "words.json.download")),
     ).rejects.toThrow();
   });
 
@@ -100,12 +111,14 @@ describe("R2 word data preparation", () => {
     "R2_SECRET_ACCESS_KEY",
   ])("fails before downloading when %s is missing", async (name) => {
     vi.stubEnv(name, "");
-    await writeFile(join(directory, "words.json"), "stale");
+    await writeFile(join(directory, "materials", "words.json"), "stale");
     await runScript();
 
     expect(process.exitCode).toBe(1);
     expect(send).not.toHaveBeenCalled();
-    await expect(access(join(directory, "words.json"))).rejects.toThrow();
+    await expect(
+      access(join(directory, "materials", "words.json")),
+    ).rejects.toThrow();
   });
 
   it.each(["AccessDenied", "NoSuchKey"])(
@@ -114,14 +127,16 @@ describe("R2 word data preparation", () => {
       send.mockRejectedValue(
         new Error(`${reason}: test-secret private-endpoint`),
       );
-      await writeFile(join(directory, "words.json"), "stale");
+      await writeFile(join(directory, "materials", "words.json"), "stale");
       await runScript();
 
       expect(process.exitCode).toBe(1);
       expect(console.error).toHaveBeenCalledExactlyOnceWith(
         "Word data preparation failed. Check R2 configuration and file transfer.",
       );
-      await expect(access(join(directory, "words.json"))).rejects.toThrow();
+      await expect(
+        access(join(directory, "materials", "words.json")),
+      ).rejects.toThrow();
       expect(destroy).toHaveBeenCalledOnce();
     },
   );
@@ -135,19 +150,24 @@ describe("R2 word data preparation", () => {
   ])(
     "copies $name without parsing or changing the contents",
     async ({ contents }) => {
-      send.mockResolvedValue({
-        Body: { transformToByteArray: async () => contents },
-      });
+      send.mockImplementation(async (request) =>
+        request.kind === "list"
+          ? { Contents: [{ Key: "words.json" }] }
+          : { Body: { transformToByteArray: async () => contents } },
+      );
       await runScript();
 
       expect(process.exitCode).toBeUndefined();
-      expect(await readFile(join(directory, "words.json"))).toEqual(contents);
+      expect(
+        await readFile(join(directory, "materials", "words.json")),
+      ).toEqual(contents);
     },
   );
 
   it("fails and cleans up when the destination cannot be replaced", async () => {
-    send.mockImplementation(async () => {
-      await mkdir(join(directory, "words.json"));
+    send.mockImplementation(async (request) => {
+      if (request.kind === "list") return { Contents: [{ Key: "words.json" }] };
+      await mkdir(join(directory, "materials", "words.json"));
       return { Body: { transformToByteArray: async () => fileContents } };
     });
     await runScript();
@@ -158,12 +178,88 @@ describe("R2 word data preparation", () => {
     );
     expect(destroy).toHaveBeenCalledOnce();
     await expect(
-      access(join(directory, "words.json.download")),
+      access(join(directory, "materials", "words.json.download")),
     ).rejects.toThrow();
   });
 
+  it("downloads JSON files across listing pages and preserves the example", async () => {
+    await writeFile(
+      join(directory, "materials", "words.json.example"),
+      "example",
+    );
+    await writeFile(join(directory, "materials", "removed.json"), "stale");
+    send.mockImplementation(async (request) => {
+      if (request.kind === "list") {
+        return request.options.ContinuationToken
+          ? { Contents: [{ Key: "words.json" }, { Key: "notes.txt" }] }
+          : {
+              Contents: [
+                { Key: "duo.json" },
+                { Key: "nested/hidden.json" },
+                { Key: "words.json.example" },
+              ],
+              IsTruncated: true,
+              NextContinuationToken: "next",
+            };
+      }
+      return { Body: { transformToByteArray: async () => fileContents } };
+    });
+    await runScript();
+
+    expect(command.mock.calls.map(([options]) => options.Key)).toEqual([
+      "duo.json",
+      "words.json",
+    ]);
+    expect(send.mock.calls[1][0].options.ContinuationToken).toBe("next");
+    expect(await readFile(join(directory, "materials", "duo.json"))).toEqual(
+      fileContents,
+    );
+    expect(
+      await readFile(
+        join(directory, "materials", "words.json.example"),
+        "utf8",
+      ),
+    ).toBe("example");
+    await expect(
+      access(join(directory, "materials", "removed.json")),
+    ).rejects.toThrow();
+  });
+
+  it("removes completed downloads when a later material fails", async () => {
+    let downloads = 0;
+    send.mockImplementation(async (request) => {
+      if (request.kind === "list")
+        return { Contents: [{ Key: "duo.json" }, { Key: "words.json" }] };
+      if (++downloads === 2) throw new Error("Transfer failed");
+      return { Body: { transformToByteArray: async () => fileContents } };
+    });
+    await runScript();
+
+    expect(process.exitCode).toBe(1);
+    await expect(
+      access(join(directory, "materials", "duo.json")),
+    ).rejects.toThrow();
+    await expect(
+      access(join(directory, "materials", "words.json")),
+    ).rejects.toThrow();
+  });
+
+  it.each([
+    { Contents: [] },
+    { Contents: [{ Key: "nested/words.json" }] },
+    { IsTruncated: true },
+  ])("fails when listing cannot provide materials: %j", async (page) => {
+    send.mockResolvedValue(page);
+    await runScript();
+
+    expect(process.exitCode).toBe(1);
+    expect(command).not.toHaveBeenCalled();
+  });
+
   it("fails when the object has no body", async () => {
-    send.mockResolvedValue({});
+    send.mockImplementation(async (request) =>
+      request.kind === "list" ? { Contents: [{ Key: "words.json" }] } : {},
+    );
     await runScript();
     expect(process.exitCode).toBe(1);
   });
@@ -173,22 +269,26 @@ describe("R2 word data preparation", () => {
     async (phase) => {
       vi.useFakeTimers();
       const pending = new Promise(() => {});
-      send.mockImplementation(() =>
-        phase === "request"
-          ? pending
-          : Promise.resolve({
-              Body: { transformToByteArray: () => pending },
-            }),
+      send.mockImplementation((request) =>
+        request.kind === "list"
+          ? Promise.resolve({ Contents: [{ Key: "words.json" }] })
+          : phase === "request"
+            ? pending
+            : Promise.resolve({
+                Body: { transformToByteArray: () => pending },
+              }),
       );
       const execution = runScript();
-      await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
+      await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
       await vi.advanceTimersByTimeAsync(30_000);
       await execution;
 
       expect(process.exitCode).toBe(1);
       expect(send.mock.calls[0][1].abortSignal.aborted).toBe(true);
       expect(destroy).toHaveBeenCalledOnce();
-      await expect(access(join(directory, "words.json"))).rejects.toThrow();
+      await expect(
+        access(join(directory, "materials", "words.json")),
+      ).rejects.toThrow();
     },
   );
 });

@@ -21,6 +21,7 @@ Pages builds automatically from `main`; preview deployments are disabled.
 - `app/src/`: Screens, components, and practice logic under `domain/practice/`
 - `app/public/`: Favicons and Web App Manifest
 - `app/test/`: Vitest and React Testing Library tests
+- `app/materials/`: Private learning material JSON files and one committed example
 - `app/scripts/`: Build preparation
 - `app/`: npm, Vite, TypeScript, and Biome configuration
 - `infra/`: Terraform definitions for the word data bucket and its public access setting
@@ -38,7 +39,7 @@ mise trust
 mise install
 cd app
 npm ci
-cp words.json.example words.json
+cp materials/words.json.example materials/words.json
 npm run dev
 ```
 
@@ -50,7 +51,7 @@ npm run build
 
 ## Deployment
 
-Terraform creates the R2 bucket for `words.json`. Run from the repository root:
+Terraform creates the R2 bucket for learning material JSON files. Run from the repository root:
 
 ```sh
 cp infra/terraform.tfvars.example infra/terraform.tfvars

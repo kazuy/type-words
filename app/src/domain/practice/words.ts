@@ -1,4 +1,4 @@
-import wordData from "../../../words.json";
+import { materials } from "./materials";
 
 export type WordEntry = {
   number: number;
@@ -7,4 +7,8 @@ export type WordEntry = {
   sentences: { en: string; ja: string }[];
 };
 
-export const words: WordEntry[] = wordData;
+export const words: WordEntry[] =
+  (
+    materials.find((material) => material.filename === "words.json") ??
+    materials[0]
+  )?.entries ?? [];
