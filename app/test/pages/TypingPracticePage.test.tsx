@@ -1,21 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { words } from "../../src/domain/practice/words";
+import type { WordEntry } from "../../src/domain/practice/words";
 import type { PracticeSettings } from "../../src/pages/PracticeSettingsPage";
 import TypingPracticePage from "../../src/pages/TypingPracticePage";
 
-vi.mock("../../src/domain/practice/words", () => ({
-  words: Array.from({ length: 20 }, (_, index) => ({
-    number: index + 1,
-    word: { en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` },
-    words: [{ en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` }],
-    sentences: [
-      {
-        en: index === 0 ? "This is an apple." : `Sentence ${index}.`,
-        ja: `例文${index}`,
-      },
-    ],
-  })),
+const words: WordEntry[] = Array.from({ length: 20 }, (_, index) => ({
+  number: index + 1,
+  word: { en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` },
+  words: [{ en: index === 0 ? "apple" : `word${index}`, ja: `単語${index}` }],
+  sentences: [
+    {
+      en: index === 0 ? "This is an apple." : `Sentence ${index}.`,
+      ja: `例文${index}`,
+    },
+  ],
 }));
 
 beforeEach(() => {
@@ -42,6 +40,7 @@ test.each(["word", "sentence"] as const)(
   (contentType) => {
     render(
       <TypingPracticePage
+        entries={words}
         settings={{ ...settings, contentType }}
         onFinish={vi.fn()}
       />,
@@ -64,6 +63,7 @@ test.each(["word", "sentence"] as const)(
   (contentType) => {
     render(
       <TypingPracticePage
+        entries={words}
         settings={{ ...settings, contentType, promptMode: "ja-to-en" }}
         onFinish={vi.fn()}
       />,
@@ -77,7 +77,11 @@ test.each(["word", "sentence"] as const)(
 
 test("shows placeholders and current position, retains mistakes, and allows deletion", () => {
   const { container } = render(
-    <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={vi.fn()}
+    />,
   );
   expect(screen.getByRole("textbox")).toHaveFocus();
   expect(container.querySelectorAll(".untyped")).toHaveLength(5);
@@ -87,7 +91,6 @@ test("shows placeholders and current position, retains mistakes, and allows dele
   expect(container.querySelectorAll(".typing-character")[2]).toHaveClass(
     "current",
   );
-  // The native text input handles Backspace and sends the shortened value.
   type("x");
   expect(container.querySelectorAll(".typing-character")[1]).toHaveClass(
     "current",
@@ -96,7 +99,13 @@ test("shows placeholders and current position, retains mistakes, and allows dele
   expect(container.querySelector(".incorrect")).toBeNull();
 });
 test("blocks incomplete and incorrect answers until every character is correct", () => {
-  render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
+  render(
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={vi.fn()}
+    />,
+  );
   type("app");
   submit();
   expect(screen.getByText("1 / 10 問")).toBeVisible();
@@ -118,6 +127,7 @@ test("blocks incomplete and incorrect answers until every character is correct",
 test("displays target case and accepts spaces, commas, and periods", () => {
   const { container } = render(
     <TypingPracticePage
+      entries={words}
       settings={{ ...settings, contentType: "sentence" }}
       onFinish={vi.fn()}
     />,
@@ -135,6 +145,7 @@ test.each([10, 15, 20] as const)(
     const onFinish = vi.fn();
     render(
       <TypingPracticePage
+        entries={words}
         settings={{
           ...settings,
           questionCount,
@@ -154,7 +165,13 @@ test.each([10, 15, 20] as const)(
   },
 );
 test("does not submit while an IME composition is active", () => {
-  render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
+  render(
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={vi.fn()}
+    />,
+  );
   type("apple");
   fireEvent.compositionStart(screen.getByRole("textbox"));
   submit();
@@ -166,7 +183,11 @@ test("does not submit while an IME composition is active", () => {
 
 test("tracks the native caret after Home, middle insertion, and Backspace", () => {
   const { container } = render(
-    <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={vi.fn()}
+    />,
   );
   const input = screen.getByRole("textbox") as HTMLInputElement;
   type("app");
@@ -191,7 +212,11 @@ test("tracks the native caret after Home, middle insertion, and Backspace", () =
 
 test("ignores Japanese input and discards IME edits without losing accepted input", () => {
   const { container } = render(
-    <TypingPracticePage settings={settings} onFinish={vi.fn()} />,
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={vi.fn()}
+    />,
   );
   const input = screen.getByRole("textbox");
   type("aりんごp");
@@ -213,6 +238,7 @@ test("ignores Japanese input and discards IME edits without losing accepted inpu
 test("skips sentence spaces and keeps the caret on the next editable character", () => {
   const { container } = render(
     <TypingPracticePage
+      entries={words}
       settings={{ ...settings, contentType: "sentence" }}
       onFinish={vi.fn()}
     />,
@@ -240,6 +266,7 @@ test("caps progress and finishes when fewer candidates than requested are availa
   try {
     render(
       <TypingPracticePage
+        entries={words}
         settings={{ ...settings, questionCount: 20, contentType: "sentence" }}
         onFinish={onFinish}
       />,
@@ -258,12 +285,20 @@ test("caps progress and finishes when fewer candidates than requested are availa
 test("retains the generated questions across input and parent rerenders", () => {
   const onFinish = vi.fn();
   const { rerender } = render(
-    <TypingPracticePage settings={settings} onFinish={onFinish} />,
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={onFinish}
+    />,
   );
   vi.spyOn(Math, "random").mockReturnValue(0);
   type("app");
   rerender(
-    <TypingPracticePage settings={{ ...settings }} onFinish={onFinish} />,
+    <TypingPracticePage
+      entries={words}
+      settings={{ ...settings }}
+      onFinish={onFinish}
+    />,
   );
   expect(document.querySelector(".practice-prompt")).toHaveTextContent("apple");
   type("apple");
@@ -278,6 +313,7 @@ test("allows returning to settings when there are no sentence candidates", () =>
     const onFinish = vi.fn();
     render(
       <TypingPracticePage
+        entries={words}
         settings={{ ...settings, contentType: "sentence" }}
         onFinish={onFinish}
       />,
@@ -303,6 +339,7 @@ test("uses multiple sentences from one word entry as separate questions", () => 
   try {
     render(
       <TypingPracticePage
+        entries={words}
         settings={{
           ...settings,
           contentType: "sentence",
@@ -329,6 +366,7 @@ test.each(["word", "sentence"] as const)(
   (contentType) => {
     const { container } = render(
       <TypingPracticePage
+        entries={words}
         settings={{ ...settings, contentType, promptMode: "ja-to-en" }}
         onFinish={vi.fn()}
       />,
@@ -348,7 +386,13 @@ test.each(["word", "sentence"] as const)(
 );
 
 test("does not offer hints in English-to-English mode", () => {
-  render(<TypingPracticePage settings={settings} onFinish={vi.fn()} />);
+  render(
+    <TypingPracticePage
+      entries={words}
+      settings={settings}
+      onFinish={vi.fn()}
+    />,
+  );
   expect(screen.queryByRole("button", { name: "ヒントを表示" })).toBeNull();
 });
 
@@ -371,6 +415,7 @@ test.each(["en-to-en", "ja-to-en"] as const)(
       const onFinish = vi.fn();
       render(
         <TypingPracticePage
+          entries={words}
           settings={{ ...settings, promptMode }}
           onFinish={onFinish}
         />,
@@ -417,6 +462,7 @@ test.each(["word", "sentence"] as const)(
       const onFinish = vi.fn();
       render(
         <TypingPracticePage
+          entries={words}
           settings={{ ...settings, contentType }}
           onFinish={onFinish}
         />,

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import ContentTypeSetting, {
   type ContentType,
 } from "../components/ContentTypeSetting";
+import MaterialSetting from "../components/MaterialSetting";
 import PracticeRangeSetting from "../components/PracticeRangeSetting";
 import PromptModeSetting, {
   type PromptMode,
@@ -9,11 +10,12 @@ import PromptModeSetting, {
 import QuestionCountSetting, {
   type QuestionCount,
 } from "../components/QuestionCountSetting";
+import type { Material } from "../domain/practice/materials";
 import {
   getPracticeCandidates,
   type PracticeRange,
 } from "../domain/practice/range";
-import { words } from "../domain/practice/words";
+import type { WordEntry } from "../domain/practice/words";
 
 export type PracticeSettings = {
   questionCount: QuestionCount;
@@ -23,6 +25,10 @@ export type PracticeSettings = {
 };
 
 type Props = {
+  entries: WordEntry[];
+  materials: Material[];
+  filename: string;
+  onMaterialChange: (filename: string) => void;
   settings: PracticeSettings;
   bounds: PracticeRange;
   onChange: (settings: PracticeSettings) => void;
@@ -30,13 +36,17 @@ type Props = {
 };
 
 export default function PracticeSettingsPage({
+  entries,
+  materials,
+  filename,
+  onMaterialChange,
   settings,
   bounds,
   onChange,
   onStart,
 }: Props) {
   const [notice, setNotice] = useState("");
-  const candidates = getPracticeCandidates(words, settings.range);
+  const candidates = getPracticeCandidates(entries, settings.range);
   const counts = {
     word: candidates.word.length,
     sentence: candidates.sentence.length,
@@ -47,7 +57,7 @@ export default function PracticeSettingsPage({
       : null;
 
   function changeRange(next: PracticeRange) {
-    const nextCandidates = getPracticeCandidates(words, next);
+    const nextCandidates = getPracticeCandidates(entries, next);
     const contentType =
       selectedType && nextCandidates[selectedType].length > 0
         ? selectedType
@@ -79,11 +89,19 @@ export default function PracticeSettingsPage({
       <h1 ref={heading} tabIndex={-1}>
         ゲームの設定
       </h1>
+      <MaterialSetting
+        materials={materials}
+        value={filename}
+        onChange={(next) => {
+          setNotice("");
+          onMaterialChange(next);
+        }}
+      />
       <PracticeRangeSetting
         bounds={bounds}
         value={settings.range}
         onChange={changeRange}
-        disabled={words.length === 0 || bounds.start === bounds.end}
+        disabled={entries.length === 0 || bounds.start === bounds.end}
       />
       <ContentTypeSetting
         value={selectedType}
