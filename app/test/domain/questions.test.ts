@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
+import { materials } from "../../src/domain/practice/materials";
 import { generatePracticeQuestions } from "../../src/domain/practice/questions";
-import { type WordEntry, words } from "../../src/domain/practice/words";
+import type { WordEntry } from "../../src/domain/practice/words";
+
+const words = materials.flatMap((material) => material.entries);
 
 const entries: WordEntry[] = [
   {

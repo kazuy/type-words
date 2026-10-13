@@ -1,14 +1,27 @@
-import { rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  ListObjectsV2Command,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
-const destination = resolve("words.json");
-const temporary = resolve("words.json.download");
+const directory = resolve("materials");
+
+async function clearDownloads() {
+  await mkdir(directory, { recursive: true });
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (
+      entry.isFile() &&
+      (entry.name.endsWith(".json") || entry.name.endsWith(".json.download"))
+    ) {
+      await rm(resolve(directory, entry.name), { force: true });
+    }
+  }
+}
 
 async function prepareWords() {
-  // Remove stale data so a failed download cannot leave usable build input.
-  await rm(destination, { force: true });
-  await rm(temporary, { force: true });
+  await clearDownloads();
 
   const required = [
     "R2_ACCOUNT_ID",
@@ -37,17 +50,56 @@ async function prepareWords() {
 
   try {
     const download = async () => {
-      const response = await client.send(
-        new GetObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME,
-          Key: "words.json",
-        }),
-        { abortSignal: controller.signal },
-      );
-      if (!response.Body) throw new Error("Missing body");
-      return response.Body.transformToByteArray();
+      const keys = new Set();
+      let continuationToken;
+      do {
+        const page = await client.send(
+          new ListObjectsV2Command({
+            Bucket: process.env.R2_BUCKET_NAME,
+            ContinuationToken: continuationToken,
+          }),
+          { abortSignal: controller.signal },
+        );
+        for (const { Key: key } of page.Contents ?? []) {
+          if (
+            key?.endsWith(".json") &&
+            !key.includes("/") &&
+            !key.includes("\\")
+          ) {
+            keys.add(key);
+          }
+        }
+        if (
+          page.IsTruncated &&
+          (!page.NextContinuationToken ||
+            page.NextContinuationToken === continuationToken)
+        ) {
+          throw new Error("Missing or repeated continuation token");
+        }
+        continuationToken = page.IsTruncated
+          ? page.NextContinuationToken
+          : undefined;
+      } while (continuationToken);
+      if (!keys.size) throw new Error("No learning materials");
+
+      for (const key of [...keys].sort()) {
+        const response = await client.send(
+          new GetObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: key,
+          }),
+          { abortSignal: controller.signal },
+        );
+        if (!response.Body) throw new Error("Missing body");
+        const contents = await response.Body.transformToByteArray();
+        if (controller.signal.aborted) throw new Error("Download aborted");
+        const destination = resolve(directory, key);
+        const temporary = `${destination}.download`;
+        await writeFile(temporary, contents, { mode: 0o600 });
+        await rename(temporary, destination);
+      }
     };
-    const contents = await Promise.race([
+    await Promise.race([
       download(),
       new Promise((_, reject) => {
         timeout = setTimeout(() => {
@@ -56,12 +108,12 @@ async function prepareWords() {
         }, 30_000);
       }),
     ]);
-    await writeFile(temporary, contents, { mode: 0o600 });
-    await rename(temporary, destination);
+  } catch (error) {
+    await clearDownloads();
+    throw error;
   } finally {
     clearTimeout(timeout);
     client.destroy();
-    await rm(temporary, { force: true });
   }
 }
 
@@ -69,7 +121,6 @@ try {
   await prepareWords();
   console.log("Word data prepared for build.");
 } catch {
-  // SDK errors can contain private endpoint and request details.
   console.error(
     "Word data preparation failed. Check R2 configuration and file transfer.",
   );

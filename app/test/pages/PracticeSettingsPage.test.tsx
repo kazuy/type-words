@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { expect, test, vi } from "vitest";
+import type { WordEntry } from "../../src/domain/practice/words";
 import PracticeSettingsPage, {
   type PracticeSettings,
 } from "../../src/pages/PracticeSettingsPage";
@@ -15,6 +16,10 @@ const settings: PracticeSettings = {
 test("displays supplied settings and an enabled game button", () => {
   render(
     <PracticeSettingsPage
+      entries={words}
+      materials={[{ filename: "words.json", name: "教材", entries: words }]}
+      filename="words.json"
+      onMaterialChange={vi.fn()}
       bounds={{ start: 1, end: 35 }}
       settings={settings}
       onChange={vi.fn()}
@@ -41,6 +46,10 @@ test.each([
   const onChange = vi.fn();
   render(
     <PracticeSettingsPage
+      entries={words}
+      materials={[{ filename: "words.json", name: "教材", entries: words }]}
+      filename="words.json"
+      onMaterialChange={vi.fn()}
       bounds={{ start: 1, end: 35 }}
       settings={settings}
       onChange={onChange}
@@ -55,6 +64,10 @@ test("starts a game when the start button is clicked", () => {
   const onStart = vi.fn();
   render(
     <PracticeSettingsPage
+      entries={words}
+      materials={[{ filename: "words.json", name: "教材", entries: words }]}
+      filename="words.json"
+      onMaterialChange={vi.fn()}
       bounds={{ start: 1, end: 35 }}
       settings={settings}
       onChange={vi.fn()}
@@ -65,22 +78,22 @@ test("starts a game when the start button is clicked", () => {
   expect(onStart).toHaveBeenCalledOnce();
 });
 
-vi.mock("../../src/domain/practice/words", () => ({
-  words: [
-    {
-      number: 1,
-      words: [{ en: "apple", ja: "りんご" }],
-      sentences: [{ en: "An apple.", ja: "りんごです。" }],
-    },
-    { number: 11, words: [{ en: "pear", ja: "梨" }], sentences: [] },
-    {
-      number: 21,
-      words: [],
-      sentences: [{ en: "Hello.", ja: "こんにちは。" }],
-    },
-    { number: 31, words: [], sentences: [] },
-  ],
-}));
+const words: WordEntry[] = [
+  {
+    number: 1,
+    word: null,
+    words: [{ en: "apple", ja: "りんご" }],
+    sentences: [{ en: "An apple.", ja: "りんごです。" }],
+  },
+  { number: 11, word: null, words: [{ en: "pear", ja: "梨" }], sentences: [] },
+  {
+    number: 21,
+    word: null,
+    words: [],
+    sentences: [{ en: "Hello.", ja: "こんにちは。" }],
+  },
+  { number: 31, word: null, words: [], sentences: [] },
+];
 
 function Preview() {
   const [value, setValue] = useState<PracticeSettings>({
@@ -89,6 +102,10 @@ function Preview() {
   });
   return (
     <PracticeSettingsPage
+      entries={words}
+      materials={[{ filename: "words.json", name: "教材", entries: words }]}
+      filename="words.json"
+      onMaterialChange={vi.fn()}
       bounds={{ start: 1, end: 35 }}
       settings={value}
       onChange={setValue}

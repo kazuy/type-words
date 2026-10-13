@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Prepare example word data
-        run: cp words.json.example words.json
+        run: cp materials/words.json.example materials/words.json
 
       - name: Lint
         run: npm run lint

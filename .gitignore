@@ -17,8 +17,8 @@ dist/
 *.log
 
 # Private word data
-/app/words.json
-/app/words.json.download
+/app/materials/*.json
+/app/materials/*.json.download
 
 # Terraform
 .terraform/
